@@ -1,0 +1,18 @@
+# KiCad
+*-backups/
+*.kicad_prl
+*-bak
+*.bak
+_autosave-*
+~*.lck
+*.lck
+fp-info-cache
+\#auto_saved_files\#
+# generated / fab outputs (published via GitHub Releases)
+fab/
+*.dsn
+*.ses
+*.rpt
+*.net
+sym_uuid.json
+__pycache__/
