@@ -1,57 +1,128 @@
-# Impedance / C-V / DLTS / Electrochem AFE — Rev A (generated)
+# Impedance / C-V / DLTS / Electrochemistry Analog Front End: Rev B
 
-Fabrication outputs (Gerbers, JLCPCB BOM/CPL, schematic PDF, renders) are attached to each [GitHub Release](../../releases), not stored in the repo.
+**Status:** the Rev B **schematic** is done; **PCB layout has not been started.** The schematic is generated in KiCad 7 format. KiCad 9/10 opens it and offers to upgrade it. Rev A (schematic plus routed board, converted to KiCad 9/10) is kept in [`revA/`](revA/).
 
-KiCad 7 format (opens in KiCad 8/9, which will offer to upgrade the files). 2-layer, 150 × 110 mm, 1.6 mm FR4, JLCPCB rules (0.25 mm default track/clearance, 0.6/0.3 mm vias).
+Fabrication outputs go in [GitHub Releases](../../releases), not in the repo. The parts list with debug and precision columns is in [`docs/BOM_revB.csv`](docs/BOM_revB.csv).
 
-## Architecture
-| Block | Parts | Function |
+## Changes from Rev A
+| Area | Rev A | Rev B |
 |---|---|---|
-| Power | J1, D1/D2, FB1/FB2, U8 | External ±15 V (bench supply), Schottky reverse protection, ferrite + bulk filtering, 78M05 → +5 V for relays and logic |
-| Drive | J2 → R3 → U1 (OPA828), R4 → J3 (CE) | **Device mode** (K6 on): U1 is a follower, CE = VIN, RE senses the DUT. **Potentiostat** (K7 on, K6 off): PI loop, R5 = 10k, C9 = 100p, R6 = 1k zero, drives CE so that V_RE = VIN |
-| RE / guard | J4 → R7 → U2 (electrometer follower), U3 → R9 → J5 and the J4 shell | Driven guard on the RE cable shield and the GUARD BNC; RE_BUF copper guard around U2's input |
-| V monitor | R10/R11 (0.1 %) → U4 → J6 | V_OUT = V_RE / 2, back-terminated in 49.9 Ω |
-| Hi-gain TIA | J7 (WE) → U5, R21–R25 ∥ C21–C25, K1–K5 | Virtual ground on WE. Ranges 10k / 100k / 1M / 10M / 100M (±5 V full scale = 500 µA … 50 nA). Relays sit on the output side, so off-relay leakage shows up as a gain error, not an offset |
-| Lo-gain TIA | D3 (BAV199 antiparallel) → U6, R15 = 499 Ω ∥ 68 p | Above about V_sat/R_f, U5 saturates, WE rises about 0.6 V and the current diverts to U6 (10 mA full scale). Needs no sync and adds no charge injection |
-| Control | J10 → U7 (74HCT541) → coils, D11–D18 | High-side coil drive, so off coils sit at 0 V (keeps coil-to-contact leakage out of the summing node) |
+| Drive input | single VIN BNC | **BIAS/PULSE** (DC) + **AC PROBE** (AC-coupled, ×1/×0.1 jumper) + **on-board 16-bit bias DAC**, summed (U9/U10) |
+| C/G null | none | **vector nuller**: RV1 → fixed C (100 pF / 1 nF) and RV2 → fixed R (20 k / 2 k, AC-coupled), driven from the measured RE voltage |
+| Calibration | none | T-switched on-board **10 k 0.1 %** and **100 pF 1 %** loads (CE_INT → WE) |
+| Cell | always connected | **CELL relay** (K10) disconnects CE |
+| High-gain ranges | 10k…100M | **1k**, 10k, 100k, 1M, 10M, 100M |
+| V monitor | V_RE/2 only | V_OUT BNC switched by **VMODE**: DC (V_RE/2) or **AC ×10.1** (100 Hz HPF) |
+| Control | 8 GPIOs → 74HCT541 | **Pico 2** (socketed), 16 lines → 2× TBD62783A source drivers, plus a fallback header |
+| Digitiser | scope only | adds an on-board **ADS131M04** (4-ch simultaneous, 24-bit) for standalone potentiostat work |
+| Parts | SMD | **through-hole** throughout, except DAC/ADC (JLC-placed) and the SOIC half of the op-amp footprints |
+| Op-amp footprint | SOIC-8 | **DIP-8 + SOIC-8 combo** (`afe:DIP-8_SOIC-8_Combo`): fit one package |
+| Steering diodes | BAV199 (SOT-23) | 2N3904 collector-base junctions (TO-92) |
 
-Output polarity: I_HI = −I_WE·R_f and I_LO = −I_WE·499 Ω, where I_WE is current flowing *into* the WE terminal.
+## Specifications (design values, not measured)
+| Parameter | Value |
+|---|---|
+| Supplies | external ±15 V (screw terminal). On board: +5 V (L7805) and +3.3 V (MCP1700). Estimated ≲300 mA from +15 V (relays + Pico), ≲120 mA from −15 V |
+| DUT drive | ±10 V, ≥ ±20 mA (op-amp limited), 47 Ω series to CE |
+| BIAS/PULSE input | DC-coupled, Z_in ≈ 9.1 kΩ (10 k to virtual ground ∥ 100 k). JP1 = 50 Ω termination |
+| AC PROBE input | AC-coupled. ×1: Z_in ≈ 9.1 kΩ, corner 16 Hz. ×0.1: Z_in ≈ 50 kΩ, corner 1.6 Hz. JP2 = 50 Ω termination, JP3 = gain |
+| Bias DAC | DAC80501M, 16-bit, +10.05 V … −10.05 V (≈0.31 mV/LSB), 0 V at midscale power-up; K21 connects it |
+| High-gain TIA (±5 V out) | 1k: ±5 mA · 10k: ±500 µA · 100k: ±50 µA · 1M: ±5 µA · 10M: ±500 nA · 100M: ±50 nA |
+| TIA feedback pole (precision Cf) | 1k: 7.2 MHz · 10k: 1.6 MHz · 100k: 720 kHz · 1M: 160 kHz · 10M/100M: set by strays (tens of kHz or less) |
+| 1 MHz C-V ranges | **1k and 10k only**; calibrate gain and phase per range with the cal loads |
+| Low-gain TIA | 499 Ω ∥ 68 pF, ±10 mA FS, takes over via the steering diodes when the high-gain TIA saturates (WE then sits ≈0.6 V off ground) |
+| Null range | C: 0–100 pF, or 0–1.01 nF (NULL_RNG). G: ±50 µS, or ±505 µS (NULL_RNG) |
+| Outputs (BNC, 50 Ω back-terminated) | V_OUT (DC: V_RE/2 · AC: ×10.1 V_RE), I_HI, I_LO |
+| Other BNCs | CE, RE (shell = driven guard), GUARD, WE, BIAS/PULSE, AC PROBE, SYNC_IN (to Pico GP26, clamped) |
+| On-board ADC | ADS131M04, ±1.2 V FS behind /5.02 dividers (±6 V at the outputs). CH0 V_DC, CH1 I_HI, CH2 I_LO, CH3 V_AC. 8.192 MHz clock |
 
-## GPIO header J10 (3.3 V logic OK; 100k pulls to +5 V or GND)
-| Pin | Signal | Relay | Default |
-|---|---|---|---|
-| 1 | CTL1 | K1 10k range | off |
-| 2 | CTL2 | K2 100k | off |
-| 3 | CTL3 | K3 1M | **on** |
-| 4 | CTL4 | K4 10M | off |
-| 5 | CTL5 | K5 100M | off |
-| 6 | CTL6 | K6 DEV (follower) | **on** |
-| 7 | CTL7 | K7 PSTAT (PI loop) | off |
-| 8 | CTL8 | K8 RE_LOCAL (RE tied to CE on the board) | **on** |
-| 9, 10 | GND | | |
-Exactly one range should be on at a time; use break-before-make, ~2 ms. Keep ≤ 4 coils on at once (74HCT541 Icc limit). For potentiostat mode: CTL6 = 0, CTL7 = 1, CTL8 = 0.
+## Blocks (schematic sheet regions)
+| Block | Refs | Notes |
+|---|---|---|
+| Power | J1, D1–D3, FB1–FB5, U25, U26 | Pico VSYS fed via D3. Pico ground via FB5 (JP5 hard-ties it) |
+| Inputs / summer | J2, J3, U9, U10, K21 | VSET = V_bias + V_dac + k·V_ac (two inverting stages) |
+| Bias DAC | U20, U11 | level shift: V = 10.05 V − 4.02·V_DAC. JP4 = SPI2C select |
+| Control amp | U1, K7 (DEV), K8 (PSTAT) | DEV: follower. PSTAT: PI (C15 100 p, R15 1 k, R16 10 k): retune for your cells |
+| Cell / cal | K9 (RE_LOCAL), K10 (CELL), K11–K14, R18, C16 | cal mid-nodes are grounded by NC relays when off, so the open contacts see 0 V across them (no leakage into WE) |
+| RE / guard / monitors | U2, U3, U7, U4, U8, K19/K20 | U7 (RE_MON) feeds the monitors and the nuller, keeping their load off the electrometer U2 |
+| Nuller | U12–U14, RV1, RV2, K15–K18 | inject at SUM_HI. C path: −jωC·V. G path: AC-coupled, bipolar |
+| TIAs | U5 (K1–K6, R41–R46, C41–C46), Q1/Q2, U6 | relays on the output side of the feedback networks |
+| ADC | U21, X1, R50–R57 | dividers + 10 nF (≈20 kHz) |
+| Controller | A1 (Pico 2), U22/U23, J12, J13 | 4.7 k pulls set the power-up state |
+
+## Control map
+16 relay lines, CTL*n* = Pico GP*n*. The same lines are on J12 (pins 1–16, GND on 17–20) for use with the Pico removed. Exactly one range at a time; use break-before-make, ~2 ms per reed operation.
+
+| CTL / GP | Pico pin | Function | Relays | Power-up |
+|---|---|---|---|---|
+| 0 | 1 | range 1k | K1 | off |
+| 1 | 2 | range 10k | K2 | off |
+| 2 | 4 | range 100k | K3 | off |
+| 3 | 5 | range 1M | K4 | **on** |
+| 4 | 6 | range 10M | K5 | off |
+| 5 | 7 | range 100M | K6 | off |
+| 6 | 9 | DEV (U1 follower) | K7 | **on** |
+| 7 | 10 | PSTAT (PI loop) | K8 | off |
+| 8 | 11 | RE_LOCAL (RE ↔ CE_INT) | K9 | **on** |
+| 9 | 12 | CELL (CE_INT ↔ CE BNC) | K10 | off |
+| 10 | 14 | CAL_R | K11 + K12 | off |
+| 11 | 15 | CAL_C | K13 + K14 | off |
+| 12 | 16 | NULL_EN | K15 + K16 | off |
+| 13 | 17 | NULL_RNG (1 nF / 2 k) | K17 + K18 | off |
+| 14 | 19 | VMODE_AC | K19 (NC) + K20 | off (= DC) |
+| 15 | 20 | DAC_EN | K21 | off |
+
+Other Pico pins (SPI0): GP16 MISO, GP17 CS_ADC, GP18 SCK, GP19 MOSI, GP20 CS_DAC, GP21 ADC_DRDY, GP22 ADC_SYNC/RESET, GP26 SYNC_IN, GP27/GP28 spare (on J13). J13 also carries SPI, RUN and GND.
+
+**Mode recipes**
+- **Device mode (C-V, DLTS):** DEV=1, PSTAT=0, RE_LOCAL=1 (or 0 with a separate RE lead to the DUT), CELL=1.
+- **Potentiostat:** DEV=0, PSTAT=1, RE_LOCAL=0, CELL=1. Switch CELL on last and off first.
+- **Calibrate:** CELL=0, RE_LOCAL=1, DEV=1, then CAL_R=1 (or CAL_C=1). Record I/V gain and phase for each range at the probe frequency.
+- **Null (C-DLTS):** DUT connected at the bias point, NULL_RNG as needed, NULL_EN=1. Adjust RV1 for minimum 1 MHz on I_HI, then RV2, then iterate.
+
+## Build variants
+Each BOM line has a **debug** and a **precision** column.
+
+| Position | Debug | Precision |
+|---|---|---|
+| U1, U2, U3, U5, U6, U7, U8, U13 (1 MHz or sensitive path) | OPA134PA | OPA828ID (SOIC half) or OPA627AP (DIP) |
+| U4, U9, U10, U11, U12, U14 | OPA134PA | OPA134PA |
+| TIA Cf (1k/10k/100k/1M) | 47p / 15p / 4.7p / 1.5p | 22p / 10p / 2.2p / 1p |
+| Rf | 1 % metal film | 1k–100k metal foil; 1M–100M glass high-megohm |
+| K5, K6 (10M, 100M) | generic SIP-1A05 | Coto 9007-class ≥10¹² Ω (**footprint differs: check**) |
+| RV1, RV2 | Bourns 3296W trimmers | 10-turn panel pots with counting dials, off-board |
+
+The NE5534 can't be used: it needs compensation pins, which this footprint doesn't wire.
+
+**Rough cost per board** (from memory, not quoted): debug ≈ $110–190; precision adds ≈ $150–260 (8× OPA828 is about $65–95 of that). A batch of bare PCBs is about $40–80, plus about $20–35 if JLC places the two SMD ICs.
+
+## Layout notes for Rev B (to do)
+- Guard rings (driven RE_BUF around U2's input; GND or SUM-level ring around SUM_HI) and solder mask removed over the guards. Mount the WE/SUM_HI node on a PTFE standoff if the 100M range matters.
+- Combo footprint: the SOIC pads are rotated 90° inside the DIP rows. Same-numbered pads **must be joined with copper**. Keep pin 2 (−IN) short on U2 and U5.
+- Pico, ADC, DAC and the oscillator go at the far edge from U2/U5, with their own ground return to the star point. No clocks or SPI near the input area.
+- The L7805 dissipates about 1.5 W: fit a heatsink.
+- Board will be larger than Rev A (DIP parts, 21 relays, 10 BNCs). Two layers should still work.
 
 ## Verification status
-- Netlist: the KiCad-exported netlist was checked against the design intent by script (69 nets, 0 mismatches). **KiCad's own ERC was not run** (KiCad 7 has no headless ERC). Run ERC in KiCad before ordering.
-- PCB DRC (KiCad 7): 0 clearance errors, 0 unconnected. The remaining items are cosmetic silkscreen overlaps/edge clips and "footprint not in library table" notices.
-- Not simulated. Loop stability (especially the PI potentiostat with a real cell) and the TIA compensation values are first-pass hand calculations.
+- Exported netlist checked against `scripts/design.py` by script: **176 nets, 0 mismatches**.
+- **KiCad ERC not run.** The KiCad 7 CLI here has no ERC; run it in KiCad 9/10. Expected flags: none intended; the unused Pico pins carry no-connect markers.
+- Not simulated. Compensation values are hand calculations.
 
-## Things to check / known limitations
-1. **Reed relay pinout** assumes Standex/Meder SIL: pins 1 and 7 are the contact, pins 3 and 5 are the coil. Confirm against the datasheet of the part you buy.
-2. Generic SIP-1A05 insulation is specified at only ≥1e10 Ω. That is up to ~1 % gain error on the 100M range (calibrate it out), or fit Coto 9007 / Pickering parts (≥1e12) on K4/K5.
-3. During a DLTS fill pulse the WE node sits about 0.6 V off ground (diode drop), so the DUT voltage is lower by that amount while I_LO is active.
-4. At 1 MHz C-V, expect a few degrees of phase shift in the V and I chains. Calibrate with reference R/C loads (open/short/load) for C-V.
-5. PI compensation (C9/R6) and C26 may need tuning for your cells and cables.
-6. Most passives have no LCSC numbers. Use JLC's BOM matcher. Verified: OPA828IDR = C1850247, reed relay = C7316298. The 100 MΩ (R25) and 0.47 pF (C24) values may need sourcing.
-7. The BNC footprint is the Amphenol B6252HB right-angle. Check that your BNCs match its pin pattern. JLC CPL rotations for SOT-23/SOIC may need fixing in the JLC preview.
-8. The pull-ups go to +5 V. With a 3.3 V MCU high, about 17 µA flows into the GPIO clamp (harmless for most MCUs). Fit 3.3 V-referenced pull-ups if you prefer.
-9. The pulse-sync input is not needed with diode steering, so none was fitted.
+## Open items / things to verify before layout
+1. **DAC80501 SPI2C level** for SPI mode (JP4 selects GND or +5 V; default R36 pulls low). The level shift assumes the 0–5 V output range (VDD = 5 V). The top few codes may clip, so firmware should limit them. K21 stays open until the DAC is configured.
+2. **Reed relay pinout** (Standex/Meder SIL, 1A and 1B): contact on 1–7, coil on 3–5.
+3. **2N3904 C-B leakage** isn't a datasheet guarantee. Measure it, or fit an SMD BAV199 on an adapter.
+4. **RP2350 GPIO pull-down erratum:** that's why the external pulls are 4.7 k. Check the current RP2350 errata.
+5. TBD62783A has internal output clamp diodes and VIN(on) of 2.0 V minimum, so it works with 3.3 V GPIO.
+6. **PI loop** (C15/R15/R16) and the AC monitor/TIA phase matching need tuning and calibration on real hardware.
+7. Firmware is not written yet (MicroPython suggested: relay sequencing, DAC/ADC drivers, calibration).
 
 ## Regenerating
-Everything comes from `scripts/design.py`. Run the scripts from the repo root with KiCad 7's Python (`pcbnew`) and Freerouting. `route.py` expects the jar at `/root/tools/fr.jar`, so edit that path first.
+`scripts/design.py` is the source of truth for Rev B. Run from the repo root:
 ```
-python3 scripts/gen_sch.py          # schematic + sym_uuid.json
-kicad-cli sch export netlist -o afe.net impedance_afe.kicad_sch && python3 scripts/check_net.py
-PASSES=80 bash scripts/build_pcb.sh # place, pre-route critical nets, autoroute, clean up
+python3 scripts/make_lib.py      # afe.kicad_sym, afe.pretty/, lib tables
+python3 scripts/gen_sch.py       # impedance_afe.kicad_sch (KiCad 7 format)
+kicad-cli sch export netlist -o afe.net impedance_afe.kicad_sch && python3 scripts/check_net.py afe.net
+python3 scripts/make_bom.py      # BOM_revB.csv (copy to docs/)
 ```
-Note: the autoroute pass is not deterministic. The board in this repo is the checked result; regenerating will change the routing.
+Regenerating overwrites the schematic and assigns new wire/label UUIDs. Once you start editing in KiCad, treat the KiCad files as the source and stop using the generator.

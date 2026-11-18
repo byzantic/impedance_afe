@@ -23,7 +23,7 @@ bad = 0
 for n in sorted(set(want) | set(got)):
     w = {x for x in want.get(n, set())}
     g = {x for x in got.get(n, set()) if not n.startswith('unconnected')}
-    if n.startswith('unconnected') and 'NC-Pad' in n: continue
+    if n.startswith('unconnected') and not any(x in {q for v in want.values() for q in v} for x in got[n]): continue
     if n.startswith('unconnected') or n.startswith('Net-('):
         print('UNNAMED/UNCONNECTED NET', n, got[n]); bad += 1; continue
     if w != g:

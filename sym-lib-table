@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "afe")(type "KiCad")(uri "${KIPRJMOD}/afe.kicad_sym")(options "")(descr "AFE project symbols"))
+)

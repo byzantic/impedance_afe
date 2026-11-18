@@ -54,7 +54,8 @@ def name(x):  # head atom
 _libcache = {}
 def lib(libname):
     if libname not in _libcache:
-        _libcache[libname] = parse(open(os.path.join(SYMDIR, libname + '.kicad_sym')).read())
+        p = libname + '.kicad_sym' if os.path.exists(libname + '.kicad_sym') else os.path.join(SYMDIR, libname + '.kicad_sym')
+        _libcache[libname] = parse(open(p).read())
     return _libcache[libname]
 
 def find_sym(libname, sym):

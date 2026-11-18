@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name "afe")(type "KiCad")(uri "${KIPRJMOD}/afe.pretty")(options "")(descr "AFE project footprints"))
+)
