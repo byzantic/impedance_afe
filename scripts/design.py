@@ -239,15 +239,18 @@ for gp, pin in gp_pin.items(): pico[str(pin)] = f'CTL{gp}'
 P('A1', 'afe:RPi_Pico_2', 'Raspberry Pi Pico 2', 'afe:RaspberryPi_Pico_2_THT', (330, 450), pico,
   mpn='SC1631 (Pico 2) on 2x 1x20 sockets')
 P('U22', 'Transistor_Array:TBD62783A', 'TBD62783APG', 'DIP18', (430, 430),
-  {**{str(i + 1): f'CTL{i}' for i in range(8)}, **{str(18 - i): f'KD{i}' for i in range(8)}, '9': '+5V', '10': 'GND'},
+  {**{str(i + 1): f'CTL{15 - i}' for i in range(8)}, **{str(18 - i): f'KD{i}' for i in range(8)}, '9': '+5V', '10': 'GND'},
   note='internal output clamp diodes; VIN(on) 2.0 V min')
 P('U23', 'Transistor_Array:TBD62783A', 'TBD62783APG', 'DIP18', (430, 495),
-  {**{str(i + 1): f'CTL{i+8}' for i in range(8)}, **{str(18 - i): f'KD{i+8}' for i in range(8)}, '9': '+5V', '10': 'GND'})
+  {**{str(i + 1): f'CTL{7 - i}' for i in range(8)}, **{str(18 - i): f'KD{i+8}' for i in range(8)}, '9': '+5V', '10': 'GND'})
+# Driver channel m (input -> KDm -> relay function m) is driven by CTL(15-m) = Pico GP(15-m) = J12 pin 16-m.
+# The reversal is for routing (pulls, driver inputs and Pico pins all in one nested order); firmware maps it.
 C('C60', '100n', '+5V', 'GND', (455, 415), fp='CD'); C('C61', '100n', '+5V', 'GND', (455, 480), fp='CD')
 g = Grid(480, 395, 8, 15.24, 20.32)
 for n in range(16):
-    if n in (3, 6, 8): R(f'R{60+n}', '4.7k', f'CTL{n}', '+3V3D', g, note='pull-up: ON at power-up')
-    else: R(f'R{60+n}', '4.7k', f'CTL{n}', 'GND', g, note='pull-down: OFF at power-up (<=8.2k for RP2350 GPIO erratum)')
+    # R(60+n) belongs to driver channel n (function n), whose input is CTL(15-n)
+    if n in (3, 6, 8): R(f'R{60+n}', '4.7k', f'CTL{15-n}', '+3V3D', g, note='pull-up: ON at power-up')
+    else: R(f'R{60+n}', '4.7k', f'CTL{15-n}', 'GND', g, note='pull-down: OFF at power-up (<=8.2k for RP2350 GPIO erratum)')
 hdr = {str(n + 1): f'CTL{n}' for n in range(16)}; hdr.update({'17': 'GND', '18': 'GND', '19': 'GND', '20': 'GND'})
 P('J12', 'Connector_Generic:Conn_02x10_Odd_Even', 'CTL0..15 fallback', 'H2x10', (500, 470), hdr)
 P('J13', 'Connector_Generic:Conn_02x06_Odd_Even', 'SPI/AUX', 'H2x6', (540, 470),

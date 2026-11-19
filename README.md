@@ -51,26 +51,26 @@ Fabrication outputs go in [GitHub Releases](../../releases), not in the repo. Th
 | Controller | A1 (Pico 2), U22/U23, J12, J13 | 4.7 k pulls set the power-up state |
 
 ## Control map
-16 relay lines, CTL*n* = Pico GP*n*. The same lines are on J12 (pins 1–16, GND on 17–20) for use with the Pico removed. Exactly one range at a time; use break-before-make, ~2 ms per reed operation.
+16 relay lines CTL*n* = Pico GP*n* = J12 pin *n*+1 (GND on 17–20) for use with the Pico removed. **GP*n* drives driver channel 15−*n*** (KD(15−*n*)): the order is reversed so that the Pico pins, pull resistors and driver inputs route without crossings; firmware maps it. Exactly one range at a time; use break-before-make, ~2 ms per reed operation.
 
-| CTL / GP | Pico pin | Function | Relays | Power-up |
-|---|---|---|---|---|
-| 0 | 1 | range 1k | K1 | off |
-| 1 | 2 | range 10k | K2 | off |
-| 2 | 4 | range 100k | K3 | off |
-| 3 | 5 | range 1M | K4 | **on** |
-| 4 | 6 | range 10M | K5 | off |
-| 5 | 7 | range 100M | K6 | off |
-| 6 | 9 | DEV (U1 follower) | K7 | **on** |
-| 7 | 10 | PSTAT (PI loop) | K8 | off |
-| 8 | 11 | RE_LOCAL (RE ↔ CE_INT) | K9 | **on** |
-| 9 | 12 | CELL (CE_INT ↔ CE BNC) | K10 | off |
-| 10 | 14 | CAL_R | K11 + K12 | off |
-| 11 | 15 | CAL_C | K13 + K14 | off |
-| 12 | 16 | NULL_EN | K15 + K16 | off |
-| 13 | 17 | NULL_RNG (1 nF / 2 k) | K17 + K18 | off |
-| 14 | 19 | VMODE_AC | K19 (NC) + K20 | off (= DC) |
-| 15 | 20 | DAC_EN | K21 | off |
+| GP / CTL | Pico pin | J12 pin | Driver ch (KD) | Function | Relays | Power-up |
+|---|---|---|---|---|---|---|
+| 0 | 1 | 1 | 15 | DAC_EN | K21 | off |
+| 1 | 2 | 2 | 14 | VMODE_AC | K19 (NC) + K20 | off (= DC) |
+| 2 | 4 | 3 | 13 | NULL_RNG (1 nF / 2 k) | K17 + K18 | off |
+| 3 | 5 | 4 | 12 | NULL_EN | K15 + K16 | off |
+| 4 | 6 | 5 | 11 | CAL_C | K13 + K14 | off |
+| 5 | 7 | 6 | 10 | CAL_R | K11 + K12 | off |
+| 6 | 9 | 7 | 9 | CELL (CE_INT ↔ CE BNC) | K10 | off |
+| 7 | 10 | 8 | 8 | RE_LOCAL (RE ↔ CE_INT) | K9 | **on** |
+| 8 | 11 | 9 | 7 | PSTAT (PI loop) | K8 | off |
+| 9 | 12 | 10 | 6 | DEV (U1 follower) | K7 | **on** |
+| 10 | 14 | 11 | 5 | range 100M | K6 | off |
+| 11 | 15 | 12 | 4 | range 10M | K5 | off |
+| 12 | 16 | 13 | 3 | range 1M | K4 | **on** |
+| 13 | 17 | 14 | 2 | range 100k | K3 | off |
+| 14 | 19 | 15 | 1 | range 10k | K2 | off |
+| 15 | 20 | 16 | 0 | range 1k | K1 | off |
 
 Other Pico pins (SPI0): GP16 MISO, GP17 CS_ADC, GP18 SCK, GP19 MOSI, GP20 CS_DAC, GP21 ADC clock out (GPOUT0, via R47 → J16-7 HAT_CLK), GP22 ADC_SYNC/RESET, GP26 SYNC_IN, GP27 ADC_DRDY, GP28 spare (on J13).
 

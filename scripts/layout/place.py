@@ -98,8 +98,8 @@ opamp('U13', 90.0 + DX, 80.0, 'T')
 opamp('U14', 112.0 + DX, 80.0, 'T')
 opamp('U12', 92.0 + DX, 52.0, 'L')
 put('R28', 99.0 + DX, 46.0, 0); put('R29', 99.0 + DX, 49.5, 0)
-put('J14', 107.0, 55.5, 0)           # RV1 (panel C-null pot) cable, Molex KK 254
-put('J15', 107.0, 63.0, 0)           # RV2 (panel G-null pot) cable
+put('J14', 104.0, 55.5, 0)           # RV1 (panel C-null pot) cable, Molex KK 254
+put('J15', 104.0, 63.0, 0)           # RV2 (panel G-null pot) cable
 
 # ---------------- low-gain TIA above Q1/Q2 (SUM_LO short and vertical; the I_LO / I_HI lanes stay clear)
 U6X, U6Y = QX + 2.5, 112.0
@@ -153,7 +153,7 @@ relay('K21', 30.0, 66.0, 0)                                  # DAC_BIAS -> DAC_S
 put('R9', 48.0, 71.0, 0); put('R10', 48.0, 74.5, 0)
 
 # ================================================================ bias-DAC level shift (DAC_OUT / DAC_REF arrive on J17)
-opamp('U11', 127.0, 50.0, 'L')
+opamp('U11', 122.0, 50.0, 'T')        # clear of the CTL fan-in channel beside the Pico
 put('R37', 119.0, 60.0, 0); put('R38', 119.0, 63.5, 0); put('C22', 132.5, 63.5, 0)
 put('R39', 119.0, 67.0, 0); put('R40', 119.0, 70.5, 0); put('C23', 132.5, 70.5, 0)
 
@@ -167,14 +167,15 @@ put('U25', 36.0, 4.0, 180)           # heatsink area kept clear below (y 6..20, 
 put('C5', 22.0, 4.0, 0); put('C6', 33.0, 26.0, 0); put('C7', 33.0, 34.0, 0)
 
 # ================================================================ relay drivers, pulls, fallback header
-put('U22', 131.0, 30.0, 270)         # inputs (1-9) top row, outputs (10-18) bottom row
-put('U23', 105.5, 30.0, 270)
-put('C60', 110.0, 42.0, 0); put('C61', 84.5, 42.0, 0)
-for i in range(16):
-    bank, k = divmod(i, 8)
-    x0 = 109.0 if bank == 0 else 83.5
-    put(f'R{60+i}', x0 + 3.2 * k, 21.0, 90)
-put('J12', 88.0, 4.0, 90)
+put('U22', 128.0, 30.0, 270)         # inputs (1-9) top row, outputs (10-18) bottom row
+put('U23', 102.5, 30.0, 270)
+put('C60', 107.0, 42.0, 0); put('C61', 81.5, 42.0, 0)
+# pulls: one slot above each driver input, same left-to-right order (R(60+m) belongs to channel m).
+# Channel order by input x: 15..8 (U23), 7..0 (U22)  ->  slot index 15-m.
+SLOTX = [80.5 + 3.2 * j for j in range(8)] + [106.0 + 3.2 * j for j in range(8)]
+for m in range(16):
+    put(f'R{60+m}', SLOTX[15 - m], 21.0, 90)
+put('J12', 85.0, 4.0, 90)          # pin p = GP(p-1): same left-to-right order as the pull slots
 
 # ================================================================ Pico, 3V3, sync, HAT
 put('A1', 148.0, 27.0, 0)
@@ -205,7 +206,7 @@ for i, (X, Y) in enumerate([(3.5, 3.5), (61.5, 3.5), (3.5, 26.5), (61.5, 26.5)])
 # ================================================================ mounting holes: H1 = GND star bond; others isolated
 put('H1', 4.0, 44.0)
 for ref, x, y in [('H2', 4.0, 146.0), ('H3', 71.5, 146.0), ('H4', 135.0, 146.0), ('H5', 216.0, 129.0),
-                  ('H6', 216.0, 4.0), ('H7', 4.0, 60.0), ('H8', 146.0, 72.0), ('H9', 120.0, 4.0)]:
+                  ('H6', 216.0, 4.0), ('H7', 4.0, 60.0), ('H8', 146.0, 72.0), ('H9', 125.0, 80.0)]:
     put(ref, x, y)
 
 # keep-clear areas (drawn on User.Comments): name, x0, y0, x1, y1

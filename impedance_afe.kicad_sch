@@ -5999,7 +5999,7 @@
         (bold yes))
       (justify left bottom))
     (uuid "4ae78785-5107-4b4d-aea5-b4dea2a89633"))
-  (text "CONTROL: Pico 2 (socketed) drives CTL0..15 -> 2x TBD62783A high-side source drivers -> relay coils (off coils sit at 0 V).\nJ12 = CTL fallback header (Pico removed). 4.7k pulls set power-up state: ON = CTL3 (1M), CTL6 (DEV), CTL8 (RE_LOCAL)."
+  (text "CONTROL: Pico 2 (socketed) drives CTL0..15 -> 2x TBD62783A high-side source drivers -> relay coils (off coils sit at 0 V).\nJ12 = CTL fallback header (Pico removed). 4.7k pulls set power-up state: ON = CTL3 (1M), CTL6 (DEV), CTL8 (RE_LOCAL).\nDriver channel m (KDm) is driven by Pico GP(15-m) = J12 pin 16-m (order chosen for routing; firmware maps it)."
     (exclude_from_sim no)
     (at 290 382 0)
     (effects
@@ -30741,7 +30741,7 @@
         (size 1.27 1.27))
       (justify left bottom))
     (uuid "bae3fc3e-f381-4435-ab07-8481748b457e"))
-  (label "CTL0"
+  (label "CTL15"
     (at 449.58 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -30795,7 +30795,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0459")
           (unit 1)))))
-  (label "CTL1"
+  (label "CTL14"
     (at 459.74 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -30849,7 +30849,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0460")
           (unit 1)))))
-  (label "CTL2"
+  (label "CTL13"
     (at 469.9 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -30903,7 +30903,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0461")
           (unit 1)))))
-  (label "CTL3"
+  (label "CTL12"
     (at 480.06 420.37 270)
     (fields_autoplaced yes)
     (effects
@@ -30957,7 +30957,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0462")
           (unit 1)))))
-  (label "CTL4"
+  (label "CTL11"
     (at 490.22 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -31011,7 +31011,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0463")
           (unit 1)))))
-  (label "CTL5"
+  (label "CTL10"
     (at 500.38 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -31065,7 +31065,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0464")
           (unit 1)))))
-  (label "CTL6"
+  (label "CTL9"
     (at 510.54 420.37 270)
     (fields_autoplaced yes)
     (effects
@@ -31119,7 +31119,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0465")
           (unit 1)))))
-  (label "CTL7"
+  (label "CTL8"
     (at 520.7 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -31173,7 +31173,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0466")
           (unit 1)))))
-  (label "CTL8"
+  (label "CTL7"
     (at 530.86 420.37 270)
     (fields_autoplaced yes)
     (effects
@@ -31227,7 +31227,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0467")
           (unit 1)))))
-  (label "CTL9"
+  (label "CTL6"
     (at 541.02 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -31281,7 +31281,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0468")
           (unit 1)))))
-  (label "CTL10"
+  (label "CTL5"
     (at 551.18 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -31335,7 +31335,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0469")
           (unit 1)))))
-  (label "CTL11"
+  (label "CTL4"
     (at 561.34 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -31389,7 +31389,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0470")
           (unit 1)))))
-  (label "CTL12"
+  (label "CTL3"
     (at 571.5 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -31443,7 +31443,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0471")
           (unit 1)))))
-  (label "CTL13"
+  (label "CTL2"
     (at 581.66 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -31497,7 +31497,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0472")
           (unit 1)))))
-  (label "CTL14"
+  (label "CTL1"
     (at 591.82 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -31551,7 +31551,7 @@
         (path "/7f1d6c58-0000-4000-8000-000000000001"
           (reference "#PWR0473")
           (unit 1)))))
-  (label "CTL15"
+  (label "CTL0"
     (at 601.98 407.67 90)
     (fields_autoplaced yes)
     (effects
@@ -32033,7 +32033,7 @@
         (size 1.27 1.27))
       (justify left bottom))
     (uuid "e48d172c-a7ad-4339-99bd-5a66e872baca"))
-  (label "CTL0"
+  (label "CTL15"
     (at 378.46 429.26 180)
     (fields_autoplaced yes)
     (effects
@@ -32041,7 +32041,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "184d28f0-2b89-4d11-aab2-f6b73939965c"))
-  (label "CTL1"
+  (label "CTL14"
     (at 378.46 431.8 180)
     (fields_autoplaced yes)
     (effects
@@ -32049,7 +32049,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "7e784f29-fc96-44ab-8a13-705e7f867b29"))
-  (label "CTL2"
+  (label "CTL13"
     (at 378.46 434.34 180)
     (fields_autoplaced yes)
     (effects
@@ -32057,7 +32057,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "1bf8d54e-3847-46f3-b928-342601900ab6"))
-  (label "CTL3"
+  (label "CTL12"
     (at 378.46 436.88 180)
     (fields_autoplaced yes)
     (effects
@@ -32065,7 +32065,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "c67b72a7-30e3-49c0-8dd1-55cc16877da3"))
-  (label "CTL4"
+  (label "CTL11"
     (at 378.46 439.42 180)
     (fields_autoplaced yes)
     (effects
@@ -32073,7 +32073,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "83b066f0-8e66-42ca-a5ec-646a25b748cc"))
-  (label "CTL5"
+  (label "CTL10"
     (at 378.46 441.96 180)
     (fields_autoplaced yes)
     (effects
@@ -32081,7 +32081,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "a713aeac-f087-4a60-b05e-4e58adfc9726"))
-  (label "CTL6"
+  (label "CTL9"
     (at 378.46 444.5 180)
     (fields_autoplaced yes)
     (effects
@@ -32089,7 +32089,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "f78e13b2-8bf9-461c-8569-3703670ef867"))
-  (label "CTL7"
+  (label "CTL8"
     (at 378.46 447.04 180)
     (fields_autoplaced yes)
     (effects
@@ -32161,7 +32161,7 @@
         (size 1.27 1.27))
       (justify left bottom))
     (uuid "a0971886-4d70-41a8-b9f2-35fa61279cf8"))
-  (label "CTL8"
+  (label "CTL7"
     (at 378.46 477.52 180)
     (fields_autoplaced yes)
     (effects
@@ -32169,7 +32169,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "f5fe90a5-dc59-4c96-967d-1fbc773396b5"))
-  (label "CTL9"
+  (label "CTL6"
     (at 378.46 480.06 180)
     (fields_autoplaced yes)
     (effects
@@ -32177,7 +32177,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "cdd1d007-2a35-42ca-972e-a06f1a68825e"))
-  (label "CTL10"
+  (label "CTL5"
     (at 378.46 482.6 180)
     (fields_autoplaced yes)
     (effects
@@ -32185,7 +32185,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "73894945-953f-463c-8f8f-ccb1299c5b8d"))
-  (label "CTL11"
+  (label "CTL4"
     (at 378.46 485.14 180)
     (fields_autoplaced yes)
     (effects
@@ -32193,7 +32193,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "649dd884-97b0-4cab-b364-6609f0be1eb0"))
-  (label "CTL12"
+  (label "CTL3"
     (at 378.46 487.68 180)
     (fields_autoplaced yes)
     (effects
@@ -32201,7 +32201,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "aad189b8-9e98-4096-bbcb-a648f31fa3b6"))
-  (label "CTL13"
+  (label "CTL2"
     (at 378.46 490.22 180)
     (fields_autoplaced yes)
     (effects
@@ -32209,7 +32209,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "186afd51-d9ab-4b04-b2cc-77e13bbac28b"))
-  (label "CTL14"
+  (label "CTL1"
     (at 378.46 492.76 180)
     (fields_autoplaced yes)
     (effects
@@ -32217,7 +32217,7 @@
         (size 1.27 1.27))
       (justify right bottom))
     (uuid "5b0be1cf-d132-491d-9989-93d70b4977fa"))
-  (label "CTL15"
+  (label "CTL0"
     (at 378.46 495.3 180)
     (fields_autoplaced yes)
     (effects
