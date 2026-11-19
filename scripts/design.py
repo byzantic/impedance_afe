@@ -29,13 +29,13 @@ FP = dict(
     TO220='Package_TO_SOT_THT:TO-220-3_Vertical',
     DIP18='Package_DIP:DIP-18_W7.62mm_Socket',
     OSC='Oscillator:Oscillator_DIP-14',
-    POT='Potentiometer_THT:Potentiometer_Bourns_3296W_Vertical',
+    KK4='Connector_Molex:Molex_KK-254_AE-6410-04A_1x04_P2.54mm_Vertical',
     MH='MountingHole:MountingHole_3.2mm_M3_Pad_Via',
 )
 
 parts = []
-def P(ref, sym, value, fp, at, nets, mpn='', lcsc='', dnp=False, note='', dbg=None, prec=None):
-    parts.append(dict(ref=ref, sym=sym, value=value, fp=FP.get(fp, fp), at=at, nets=nets, mpn=mpn, lcsc=lcsc,
+def P(ref, sym, value, fp, at, nets, mpn='', lcsc='', dnp=False, note='', dbg=None, prec=None, board=True):
+    parts.append(dict(ref=ref, sym=sym, value=value, fp=FP.get(fp, fp), at=at, nets=nets, mpn=mpn, lcsc=lcsc, board=board,
                       dnp=dnp, note=note, dbg=dbg if dbg is not None else value,
                       prec=prec if prec is not None else (dbg if dbg is not None else value)))
 
@@ -164,17 +164,23 @@ RELAY('K19', 'VDC_R', 'VOUT_BNC', 'KD14', g(), nc=True); RELAY('K20', 'VAC_R', '
 BNC('J8', 'VOUT_BNC', 'GND', g(), 'V_OUT')
 
 # ================================================================ NULLER  (x 560..830, y 210..330)
-T(560, 213, 'NULLER (vector): U12 makes -V_RE. RV1 (0..-1) -> U13 -> 100p (+910p via K17) injects -jwC.V  (C null).|RV2 (+1..-1) -> U14 -> 220n -> 20k (2k via K18) injects G null, AC-coupled (no DC into WE). K15/K16 (NULL_EN) connect to SUM_HI.')
+T(560, 213, 'NULLER (vector): U12 makes -V_RE. RV1 (panel, via J14) (0..-1) -> U13 -> 100p (+910p via K17) injects -jwC.V  (C null).|RV2 (+1..-1) -> U14 -> 220n -> 20k (2k via K18) injects G null, AC-coupled (no DC into WE). K15/K16 (NULL_EN) connect to SUM_HI.')
 g = Grid(570, 240, 7, 33.02, 38.1)
 OPAMP('U12', 'GND', 'NINV_IN', 'NULL_NEG', g(), False, 'Null inverter')
 R('R28', '10k 0.1%', 'RE_MON', 'NINV_IN', g); R('R29', '10k 0.1%', 'NINV_IN', 'NULL_NEG', g)
-P('RV1', 'Device:R_Potentiometer', '10k 10-turn (C null)', 'POT', g(), {'1': 'GND', '3': 'NULL_NEG', '2': 'NC_WIP'},
-  dbg='Bourns 3296W-1-103', prec='Bourns 3590S-2-103 panel + dial (off-board)')
+P('RV1', 'Device:R_Potentiometer', '10k 10-turn panel', '', g(), {'1': 'GND', '3': 'NULL_NEG', '2': 'NC_WIP'},
+  dbg='Bourns 3590S-2-103 panel + dial (off-board)', prec='Bourns 3590S-2-103 panel + dial (off-board)',
+  note='front-panel pot, not on the PCB; wired via J14', board=False)
+P('J14', 'Connector_Generic:Conn_01x04', 'POT C-null', 'KK4', g(), {'1': 'NULL_NEG', '2': 'NC_WIP', '3': 'GND', '4': 'GND'},
+  mpn='Molex 22-27-2041 (KK 254); 0.1in header also fits', note='RV1 cable: 1 CW, 2 wiper, 3 CCW, 4 shield (GND)')
 OPAMP('U13', 'NC_WIP', 'NULLC_DRV', 'NULLC_DRV', g(), True, 'C-null buffer')
 C('C18', '100p 1% C0G', 'NULLC_DRV', 'NULLC_INJ', g); C('C19', '910p 1% C0G', 'NULLC_DRV', 'NULLC_R', g)
 RELAY('K17', 'NULLC_R', 'NULLC_INJ', 'KD13', g()); RELAY('K15', 'NULLC_INJ', 'SUM_HI', 'KD12', g())
-P('RV2', 'Device:R_Potentiometer', '10k 10-turn (G null)', 'POT', g(), {'1': 'RE_MON', '3': 'NULL_NEG', '2': 'NG_WIP'},
-  dbg='Bourns 3296W-1-103', prec='Bourns 3590S-2-103 panel + dial (off-board)')
+P('RV2', 'Device:R_Potentiometer', '10k 10-turn panel', '', g(), {'1': 'RE_MON', '3': 'NULL_NEG', '2': 'NG_WIP'},
+  dbg='Bourns 3590S-2-103 panel + dial (off-board)', prec='Bourns 3590S-2-103 panel + dial (off-board)',
+  note='front-panel pot, not on the PCB; wired via J15', board=False)
+P('J15', 'Connector_Generic:Conn_01x04', 'POT G-null', 'KK4', g(), {'1': 'NULL_NEG', '2': 'NG_WIP', '3': 'RE_MON', '4': 'GND'},
+  mpn='Molex 22-27-2041 (KK 254); 0.1in header also fits', note='RV2 cable: 1 CW, 2 wiper, 3 CCW, 4 shield (GND)')
 OPAMP('U14', 'NG_WIP', 'NULLG_DRV', 'NULLG_DRV', g(), False, 'G-null buffer')
 C('C20', '220n film', 'NULLG_DRV', 'NULLG_AC', g, fp='CF'); R('R30', '20k', 'NULLG_AC', 'NULLG_INJ', g)
 R('R31', '2.2k', 'NULLG_AC', 'NULLG_R', g)

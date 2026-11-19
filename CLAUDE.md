@@ -13,6 +13,8 @@ Analog front end for impedance / C-V (1 MHz), DLTS and electrochemistry. The out
 - `scripts/check_net.py` is still useful. After any schematic change, run:
   `kicad-cli sch export netlist -o afe.net impedance_afe.kicad_sch && python3 scripts/check_net.py afe.net`
   It compares against `design.py`. If the schematic is changed on purpose, update `design.py` to match, or note that the check is retired.
+- `scripts/schematic/` edits the existing KiCad schematic in place (wired drawing, power symbols, J14/J15). Its block scripts restart from a stripped state, so **re-running them overwrites hand edits in KiCad**; treat the KiCad file as the source from now on. `verify.sh REF.net` checks a schematic edit (net check, connectivity vs a reference netlist, ERC).
+- Rails are power symbols (global nets `GND`, `+15V`, `-15V`, `+5V`, `+3V3`, `+3V3A`, `+3V3D`, `PICO_GND`); every other net is a local label (`/NAME`). RV1/RV2 are off-board panel pots (excluded from the board) on J14/J15.
 - Project library `afe` (`afe.kicad_sym`, `afe.pretty/`): Pico 2 symbol and footprint, ADS131M04 and DAC80501 symbols, and the `DIP-8_SOIC-8_Combo` op-amp footprint.
 
 ## Owner's preferences

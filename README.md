@@ -45,7 +45,7 @@ Fabrication outputs go in [GitHub Releases](../../releases), not in the repo. Th
 | Control amp | U1, K7 (DEV), K8 (PSTAT) | DEV: follower. PSTAT: PI (C15 100 p, R15 1 k, R16 10 k): retune for your cells |
 | Cell / cal | K9 (RE_LOCAL), K10 (CELL), K11–K14, R18, C16 | cal mid-nodes are grounded by NC relays when off, so the open contacts see 0 V across them (no leakage into WE) |
 | RE / guard / monitors | U2, U3, U7, U4, U8, K19/K20 | U7 (RE_MON) feeds the monitors and the nuller, keeping their load off the electrometer U2 |
-| Nuller | U12–U14, RV1, RV2, K15–K18 | inject at SUM_HI. C path: −jωC·V. G path: AC-coupled, bipolar |
+| Nuller | U12–U14, RV1, RV2, J14, J15, K15–K18 | inject at SUM_HI. C path: −jωC·V. G path: AC-coupled, bipolar. RV1/RV2 are front-panel 10-turn pots on J14/J15 (Molex KK 254: 1 CW, 2 wiper, 3 CCW, 4 cable shield) |
 | TIAs | U5 (K1–K6, R41–R46, C41–C46), Q1/Q2, U6 | relays on the output side of the feedback networks |
 | ADC | U21, X1, R50–R57 | dividers + 10 nF (≈20 kHz) |
 | Controller | A1 (Pico 2), U22/U23, J12, J13 | 4.7 k pulls set the power-up state |
@@ -90,7 +90,7 @@ Each BOM line has a **debug** and a **precision** column.
 | TIA Cf (1k/10k/100k/1M) | 47p / 15p / 4.7p / 1.5p | 22p / 10p / 2.2p / 1p |
 | Rf | 1 % metal film | 1k–100k metal foil; 1M–100M glass high-megohm |
 | K5, K6 (10M, 100M) | generic SIP-1A05 | Coto 9007-class ≥10¹² Ω (**footprint differs: check**) |
-| RV1, RV2 | Bourns 3296W trimmers | 10-turn panel pots with counting dials, off-board |
+| RV1, RV2 | 10-turn panel pots with counting dials (Bourns 3590S-2-103), off-board via J14/J15 | same |
 
 The NE5534 can't be used: it needs compensation pins, which this footprint doesn't wire.
 

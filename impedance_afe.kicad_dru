@@ -1,0 +1,26 @@
+(version 1)
+
+# Pad-to-pad clearance inside packages whose pitch cannot meet the netclass clearance.
+# U20 VSSOP-10 (0.5 mm), U21 TSSOP-20 (0.65 mm): JLC-placed fine-pitch ICs.
+# Q1/Q2/U26 TO-92 inline (1.27 mm). Q1/Q2 put SUM_HI next to SUM_LO (both virtual grounds), so the
+# HighZ 0.5 mm clearance cannot be met inside that footprint.
+(rule "U20 internal"
+  (condition "A.memberOfFootprint('U20') && B.memberOfFootprint('U20')")
+  (constraint clearance (min 0.15mm)))
+(rule "U21 internal"
+  (condition "A.memberOfFootprint('U21') && B.memberOfFootprint('U21')")
+  (constraint clearance (min 0.15mm)))
+(rule "Q1 internal"
+  (condition "A.memberOfFootprint('Q1') && B.memberOfFootprint('Q1')")
+  (constraint clearance (min 0.15mm)))
+(rule "Q2 internal"
+  (condition "A.memberOfFootprint('Q2') && B.memberOfFootprint('Q2')")
+  (constraint clearance (min 0.15mm)))
+(rule "U26 internal"
+  (condition "A.memberOfFootprint('U26') && B.memberOfFootprint('U26')")
+  (constraint clearance (min 0.15mm)))
+
+# Crowded pads (op-amp pin 3 GND, ADC GND pins, U2 pin 2 in the RE_BUF guard) are also tied to the
+# B.Cu plane or by tracks; one thermal spoke is acceptable.
+(rule "min spokes"
+  (constraint min_resolved_spokes 1))

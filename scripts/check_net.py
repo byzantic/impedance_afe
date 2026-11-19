@@ -17,7 +17,7 @@ for n in nets[1:]:
 want = collections.defaultdict(set)
 for p in design.parts:
     for pin, n in p['nets'].items():
-        if not p['ref'].startswith('#'): want[n].add((p['ref'], pin))
+        if not p['ref'].startswith('#') and p.get('board', True): want[n].add((p['ref'], pin))  # off-board parts are not in the PCB netlist
 
 bad = 0
 for n in sorted(set(want) | set(got)):

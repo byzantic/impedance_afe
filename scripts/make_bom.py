@@ -6,7 +6,7 @@ def refkey(r):
 
 groups = collections.OrderedDict()
 for p in sorted((p for p in design.parts if not p['ref'].startswith('#')), key=lambda p: refkey(p['ref'])):
-    k = (p['value'], p['dbg'], p['prec'], p['fp'].split(':')[1], p['mpn'], p['lcsc'], p['dnp'])
+    k = (p['value'], p['dbg'], p['prec'], p['fp'].split(':')[1] if ':' in p['fp'] else '(off-board)', p['mpn'], p['lcsc'], p['dnp'])
     groups.setdefault(k, []).append(p['ref'])
 with open('BOM_revB.csv', 'w', newline='') as f:
     w = csv.writer(f)
