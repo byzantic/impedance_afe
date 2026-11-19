@@ -34,20 +34,20 @@ Fabrication outputs go in [GitHub Releases](../../releases), not in the repo. Th
 | Null range | C: 0–100 pF, or 0–1.01 nF (NULL_RNG). G: ±50 µS, or ±505 µS (NULL_RNG) |
 | Outputs (BNC, 50 Ω back-terminated) | V_OUT (DC: V_RE/2 · AC: ×10.1 V_RE), I_HI, I_LO |
 | Other BNCs | CE, RE (shell = driven guard), GUARD, WE, BIAS/PULSE, AC PROBE, SYNC_IN (to Pico GP26, clamped) |
-| On-board ADC | ADS131M04, ±1.2 V FS behind /5.02 dividers (±6 V at the outputs). CH0 V_DC, CH1 I_HI, CH2 I_LO, CH3 V_AC. 8.192 MHz clock |
+| ADC / DAC | On the **ADC/DAC HAT** (`adc_hat/`, Pi Zero pHAT outline) plugged onto J16/J17. ADS131M04, ±1.2 V FS behind the main board's /5.02 dividers (±6 V at the outputs). CH0 V_DC, CH1 I_HI, CH2 I_LO, CH3 V_AC. Clock: Pico GP21 GPOUT0 at 8.000 MHz (USB PLL / 6; data rates ×0.977) via J16-7 by default, or the HAT's 8.192 MHz oscillator (HAT JP1). DAC80501 bias DAC also on the HAT |
 
 ## Blocks (schematic sheet regions)
 | Block | Refs | Notes |
 |---|---|---|
 | Power | J1, D1–D3, FB1–FB5, U25, U26 | Pico VSYS fed via D3. Pico ground via FB5 (JP5 hard-ties it) |
-| Inputs / summer | J2, J3, U9, U10, K21 | VSET = V_bias + V_dac + k·V_ac (two inverting stages) |
-| Bias DAC | U20, U11 | level shift: V = 10.05 V − 4.02·V_DAC. JP4 = SPI2C select |
+| Inputs / summer | J2, J3, U9, U10, K21 | VSET = V_bias + V_dac + k·V_ac (two inverting stages). J2/J3 are on the back edge |
+| Bias DAC | HAT U2, U11 | level shift on the main board: V = 10.05 V − 4.02·V_DAC. DAC_OUT/DAC_REF arrive on J17. SPI2C strap is on the HAT (R2 + JP2) |
 | Control amp | U1, K7 (DEV), K8 (PSTAT) | DEV: follower. PSTAT: PI (C15 100 p, R15 1 k, R16 10 k): retune for your cells |
 | Cell / cal | K9 (RE_LOCAL), K10 (CELL), K11–K14, R18, C16 | cal mid-nodes are grounded by NC relays when off, so the open contacts see 0 V across them (no leakage into WE) |
 | RE / guard / monitors | U2, U3, U7, U4, U8, K19/K20 | U7 (RE_MON) feeds the monitors and the nuller, keeping their load off the electrometer U2 |
 | Nuller | U12–U14, RV1, RV2, J14, J15, K15–K18 | inject at SUM_HI. C path: −jωC·V. G path: AC-coupled, bipolar. RV1/RV2 are front-panel 10-turn pots on J14/J15 (Molex KK 254: 1 CW, 2 wiper, 3 CCW, 4 cable shield) |
 | TIAs | U5 (K1–K6, R41–R46, C41–C46), Q1/Q2, U6 | relays on the output side of the feedback networks |
-| ADC | U21, X1, R50–R57 | dividers + 10 nF (≈20 kHz) |
+| ADC link | J16 (Pi 40-pin, male), J17 (2×6 analog, male), R47, R50–R57, C50–C53 | dividers + 10 nF (≈20 kHz) on the main board. J17: 1 DAC_OUT, 3 DAC_REF, 5/7/9/11 ADC3P/2P/1P/0P, even pins GND (ADCn N tied to GND here) |
 | Controller | A1 (Pico 2), U22/U23, J12, J13 | 4.7 k pulls set the power-up state |
 
 ## Control map
@@ -72,7 +72,11 @@ Fabrication outputs go in [GitHub Releases](../../releases), not in the repo. Th
 | 14 | 19 | VMODE_AC | K19 (NC) + K20 | off (= DC) |
 | 15 | 20 | DAC_EN | K21 | off |
 
-Other Pico pins (SPI0): GP16 MISO, GP17 CS_ADC, GP18 SCK, GP19 MOSI, GP20 CS_DAC, GP21 ADC_DRDY, GP22 ADC_SYNC/RESET, GP26 SYNC_IN, GP27/GP28 spare (on J13). J13 also carries SPI, RUN and GND.
+Other Pico pins (SPI0): GP16 MISO, GP17 CS_ADC, GP18 SCK, GP19 MOSI, GP20 CS_DAC, GP21 ADC clock out (GPOUT0, via R47 → J16-7 HAT_CLK), GP22 ADC_SYNC/RESET, GP26 SYNC_IN, GP27 ADC_DRDY, GP28 spare (on J13).
+
+J16 uses the Raspberry Pi pinout, so the HAT also stacks on a Pi Zero: SPI0 on 19/21/23, CE0 (24) = CS_ADC, CE1 (26) = CS_DAC, GPIO4 (7, GPCLK0) = clock, GPIO24 (18) = SYNC/RESET, GPIO25 (22) = DRDY, 3V3 on 1/17 (HAT logic), 5V on 2/4 (HAT AVDD LDO and DAC).
+
+J13 (back edge) carries SPI, DRDY, SYNC, HAT_CLK (pin 9), RUN and GND: an external 3.3 V SPI master can run the HAT with the Pico absent or held in reset (RUN low), using the HAT oscillator (HAT JP1 2-3) or its own clock on J13-9.
 
 **Mode recipes**
 - **Device mode (C-V, DLTS):** DEV=1, PSTAT=0, RE_LOCAL=1 (or 0 with a separate RE lead to the DUT), CELL=1.
@@ -94,28 +98,32 @@ Each BOM line has a **debug** and a **precision** column.
 
 The NE5534 can't be used: it needs compensation pins, which this footprint doesn't wire.
 
-**Rough cost per board** (from memory, not quoted): debug ≈ $110–190; precision adds ≈ $150–260 (8× OPA828 is about $65–95 of that). A batch of bare PCBs is about $40–80, plus about $20–35 if JLC places the two SMD ICs.
+**Rough cost per board** (from memory, not quoted): debug ≈ $110–190; precision adds ≈ $150–260 (8× OPA828 is about $65–95 of that). A batch of bare PCBs is about $40–80, plus the ADC/DAC HAT (all SMD, JLC-assembled; ADS131M04 + DAC80501 are most of its cost).
 
-## Layout notes for Rev B (to do)
-- Guard rings (driven RE_BUF around U2's input; GND or SUM-level ring around SUM_HI) and solder mask removed over the guards. Mount the WE/SUM_HI node on a PTFE standoff if the 100M range matters.
-- Combo footprint: the SOIC pads are rotated 90° inside the DIP rows. Same-numbered pads **must be joined with copper**. Keep pin 2 (−IN) short on U2 and U5.
-- Pico, ADC, DAC and the oscillator go at the far edge from U2/U5, with their own ground return to the star point. No clocks or SPI near the input area.
-- The L7805 dissipates about 1.5 W: fit a heatsink.
-- Board will be larger than Rev A (DIP parts, 21 relays, 10 BNCs). Two layers should still work.
+## Layout (Rev B, first pass: placed + critical nets, not yet autorouted)
+- **Front edge (bottom):** CE, RE (shell = GUARD), GUARD, WE, I_LO, I_HI, V_OUT. I_LO and I_HI are swapped relative to the schematic order so that their lanes, and V_OUT's, run down to the BNCs to the right of the SUM_HI bus end, with no crossings of SUM_HI.
+- **Back edge (top):** J1 power, BIAS/PULSE, AC PROBE, Pico USB, SYNC_IN, J13. Nuller pots on cables (J14/J15) to the front panel.
+- **TIA ladder:** about 10–11 mm column pitch, ≥1.4 mm between parts, and a ~4 mm clear area between U5 −IN and R46 for an optional PTFE standoff. The SUM_HI guard is a GND pour with stitching vias and a mask-free band (a closed ring can't fit inside the combo footprint).
+- **HAT:** sits at the back-right corner, rotated 90°, on 11 mm M2.5 standoffs (H10–H13). Keep parts under it short.
+- **Mounting holes:** H1 (by J1, the star point) is the only chassis bond. H2–H9 are isolated M3 NPTH holes: front edge ×4, back edge ×2, sides and centre.
+- Combo footprints: same-numbered DIP and SOIC pads are joined with copper on every op-amp.
+- The L7805 dissipates about 1.5 W: fit a heatsink (keep-clear area on User.Comments).
 
 ## Verification status
-- Exported netlist checked against `scripts/design.py` by script: **176 nets, 0 mismatches**.
-- **KiCad ERC not run.** The KiCad 7 CLI here has no ERC; run it in KiCad 9/10. Expected flags: none intended; the unused Pico pins carry no-connect markers.
+- Main schematic: netlist checked against `scripts/design.py` (**190 nets, 0 problems**); KiCad 9 ERC 0 errors (16 `lib_symbol_mismatch` warnings from the local KiCad 9 libraries).
+- HAT schematic: checked against `scripts/hat/design.py` (**59 nets, 0 problems**); ERC 0 errors.
+- HAT/main connectors: pad positions match under the mounting transform (0.000 mm), pin nets match.
 - Not simulated. Compensation values are hand calculations.
 
 ## Open items / things to verify before layout
-1. **DAC80501 SPI2C level** for SPI mode (JP4 selects GND or +5 V; default R36 pulls low). The level shift assumes the 0–5 V output range (VDD = 5 V). The top few codes may clip, so firmware should limit them. K21 stays open until the DAC is configured.
+1. **DAC80501 SPI2C level** for SPI mode (HAT: R2 pulls low, JP2 ties to +5VA). The level shift assumes the 0–5 V output range (VDD = 5 V). The top few codes may clip, so firmware should limit them. K21 stays open until the DAC is configured.
 2. **Reed relay pinout** (Standex/Meder SIL, 1A and 1B): contact on 1–7, coil on 3–5.
 3. **2N3904 C-B leakage** isn't a datasheet guarantee. Measure it, or fit an SMD BAV199 on an adapter.
 4. **RP2350 GPIO pull-down erratum:** that's why the external pulls are 4.7 k. Check the current RP2350 errata.
 5. TBD62783A has internal output clamp diodes and VIN(on) of 2.0 V minimum, so it works with 3.3 V GPIO.
 6. **PI loop** (C15/R15/R16) and the AC monitor/TIA phase matching need tuning and calibration on real hardware.
-7. Firmware is not written yet (MicroPython suggested: relay sequencing, DAC/ADC drivers, calibration).
+7. **ADS131M04 at 8.000 MHz:** confirm the CLKIN range in the datasheet. HAT oscillator Y1 part number is TBD.
+8. Firmware is not written yet (MicroPython suggested: relay sequencing, DAC/ADC drivers, calibration).
 
 ## Regenerating
 `scripts/design.py` is the source of truth for Rev B. Run from the repo root:

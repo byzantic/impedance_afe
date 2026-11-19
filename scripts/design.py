@@ -75,7 +75,7 @@ TEXT = []
 def T(x, y, s): TEXT.append(((x, y), s))
 
 # ================================================================ POWER  (x 20..230, y 25..120)
-T(20, 22, 'POWER: external +/-15 V bench supply (Schottky reverse protection, ferrite filtering). L7805 -> +5 V (relays, DAC, Pico VSYS).|MCP1700 -> +3V3, split by ferrites into +3V3A (ADC analog) and +3V3D (ADC digital, oscillator, logic pull-ups).')
+T(20, 22, 'POWER: external +/-15 V bench supply (Schottky reverse protection, ferrite filtering). L7805 -> +5 V (relays, ADC/DAC HAT, Pico VSYS).|MCP1700 -> +3V3 -> FB4 -> +3V3D (HAT logic supply via J16, pull-ups, SYNC clamp).')
 g = Grid(30, 40, 11, 17.78, 20.32)
 P('J1', 'Connector:Screw_Terminal_01x03', '+15/GND/-15', 'TB3', g(), {'1': '+15V_IN', '2': 'GND', '3': '-15V_IN'})
 P('D1', 'Diode:1N5819', '1N5819', 'DO41', g(), {'2': '+15V_IN', '1': 'P15_RAW'})
@@ -88,15 +88,18 @@ C('C5', '330n', 'P15_RAW', 'GND', g, fp='CD')
 CP('C6', '10u/25V', '+5V', 'GND', g); C('C7', '100n', '+5V', 'GND', g, fp='CD')
 P('U26', 'Regulator_Linear:MCP1700x-330xxTO', 'MCP1700-3302E/TO', 'TO92', g(), {'2': '+5V', '1': 'GND', '3': '+3V3'})
 C('C8', '1u', '+5V', 'GND', g, fp='CD'); C('C9', '1u', '+3V3', 'GND', g, fp='CD')
-FBD('FB3', '+3V3', '+3V3A', g); FBD('FB4', '+3V3', '+3V3D', g)
-CP('C10', '10u/16V', '+3V3A', 'GND', g); CP('C11', '10u/16V', '+3V3D', 'GND', g)
+FBD('FB4', '+3V3', '+3V3D', g)
+CP('C11', '10u/16V', '+3V3D', 'GND', g)   # FB3/C10/+3V3A removed: ADC moved to the HAT
 P('D3', 'Diode:1N5819', '1N5819', 'DO41', g(), {'2': '+5V', '1': 'VSYS'}, note='Pico VSYS feed; USB may be plugged in at the same time')
 FBD('FB5', 'PICO_GND', 'GND', g)
 P('JP5', 'Connector_Generic:Conn_01x02', 'PICO_GND_TIE', 'J2', g(), {'1': 'PICO_GND', '2': 'GND'}, note='fit jumper to hard-tie Pico ground')
-for i, n in enumerate(['+15V', '-15V', 'GND', 'P15_RAW', 'N15_RAW', '+3V3A', '+3V3D', 'VSYS', 'PICO_GND']):
-    P(f'#FLG{i+1}', 'power:PWR_FLAG', 'PWR_FLAG', '', g(), {'1': n})
-for i in range(4):
-    P(f'H{i+1}', 'Mechanical:MountingHole_Pad', 'M3', 'MH', g(), {'1': 'GND'})
+for i, n in enumerate(['+15V', '-15V', 'GND', 'P15_RAW', 'N15_RAW', None, '+3V3D', 'VSYS', 'PICO_GND']):
+    if n: P(f'#FLG{i+1}', 'power:PWR_FLAG', 'PWR_FLAG', '', g(), {'1': n})
+P('H1', 'Mechanical:MountingHole_Pad', 'M3', 'MH', g(), {'1': 'GND'}, note='the only chassis bond (star point, by J1)')
+for i in range(2, 10):
+    P(f'H{i}', 'Mechanical:MountingHole', 'M3', 'MountingHole:MountingHole_3.2mm_M3', g(), {}, note='chassis, isolated (NPTH)')
+for i in range(10, 14):
+    P(f'H{i}', 'Mechanical:MountingHole', 'M2.5', 'MountingHole:MountingHole_2.7mm_M2.5', g(), {}, note='HAT standoff (NPTH)')
 
 # ================================================================ INPUTS / SUMMER / DAC  (x 20..270, y 130..330)
 T(20, 128, 'DRIVE INPUTS: BIAS/PULSE (DC) + AC PROBE (AC-coupled, JP3 = x1 or x0.1) + on-board bias DAC (via K21),|summed by U9 and re-inverted by U10:  VSET = V_bias + V_dac + k*V_ac.')
@@ -117,15 +120,10 @@ OPAMP('U10', 'GND', 'INV_IN', 'VSET_RAW', (150, 265), False, 'Re-inverter')
 R('R12', '10k 0.1%', 'SUM_OUT', 'INV_IN', (120, 292)); R('R13', '10k 0.1%', 'INV_IN', 'VSET_RAW', (135, 292))
 C('C14', '10p C0G', 'INV_IN', 'VSET_RAW', (150, 292)); R('R14', '1k', 'VSET_RAW', 'VSET', (180, 265))
 
-T(20, 312, 'BIAS DAC: DAC80501M (midscale at power-up) 0..5 V -> U11:  V_DAC_BIAS = 10.05 V - 4.02*V_DAC  (+10..-10 V, 0 V at midscale).|Connected to the summer only when K21 closes (firmware sets range first).')
+T(20, 312, 'BIAS DAC (on the HAT): DAC80501M (midscale at power-up) 0..5 V -> U11:  V_DAC_BIAS = 10.05 V - 4.02*V_DAC  (+10..-10 V, 0 V at midscale).|Connected to the summer only when K21 closes (firmware sets range first).')
 g = Grid(30, 315, 7, 20.32, 20.32)
-P('U20', 'afe:DAC80501_DGS', 'DAC80501MDGS', 'Package_SO:VSSOP-10_3x3mm_P0.5mm', (40, 345),
-  {'1': '+5V', '4': 'GND', '5': 'DAC_SPI2C', '2': 'DAC_OUT', '10': 'DAC_REF', '6': 'SCK', '7': 'CS_DAC', '8': 'MOSI'},
-  mpn='DAC80501MDGSR', lcsc='C1852032', note='SMD (JLC place)')
+# U20 DAC80501, JP4/R36 (SPI2C), C24-C26 moved to the HAT (adc_hat/); DAC_OUT and DAC_REF arrive on J17
 g = Grid(80, 330, 6, 25.4, 30.48)
-P('JP4', 'Connector_Generic:Conn_01x03', 'SPI2C select', 'J3', g(), {'1': 'GND', '2': 'DAC_SPI2C', '3': '+5V'}, note='SPI2C level for SPI mode: confirm in datasheet')
-R('R36', '10k', 'DAC_SPI2C', 'GND', g)
-C('C24', '100n', '+5V', 'GND', g, fp='CD'); CP('C25', '10u/16V', '+5V', 'GND', g); C('C26', '150n', 'DAC_REF', 'GND', g, fp='CD')
 R('R37', '10k 0.1%', 'DAC_OUT', 'LS_INV', g); R('R38', '40.2k 0.1%', 'LS_INV', 'DAC_BIAS', g); C('C22', '22p C0G', 'LS_INV', 'DAC_BIAS', g)
 R('R39', '10k 0.1%', 'DAC_REF', 'LS_Y', g); R('R40', '40.2k 0.1%', 'LS_Y', 'GND', g); C('C23', '100n film', 'LS_Y', 'GND', g, fp='CF')
 OPAMP('U11', 'LS_Y', 'LS_INV', 'DAC_BIAS', (250, 345), False, 'DAC level shift')
@@ -214,20 +212,19 @@ R('R33', '499 0.1%', 'SUM_LO', 'ILO_OUT', (660, 185)); C('C27', '68p C0G', 'SUM_
 R('R34', '49.9', 'ILO_OUT', 'ILO_BNC', (705, 155)); BNC('J10', 'ILO_BNC', 'GND', (725, 160), 'I_LO')
 
 # ================================================================ ADC  (x 20..270, y 370..580)
-T(20, 400, 'ADC: ADS131M04, 4 simultaneous channels, +/-1.2 V FS. Each input = 4.02k/1k divider (/5.02, +/-5 V -> +/-1.0 V) + 10 nF (~20 kHz).|CH0 = V DC monitor, CH1 = I_HI, CH2 = I_LO, CH3 = AC V monitor. 8.192 MHz clock from X1.')
-P('U21', 'afe:ADS131M04_PW', 'ADS131M04IPWR', 'Package_SO:TSSOP-20_4.4x6.5mm_P0.65mm', (60, 450),
-  {'1': '+3V3A', '2': 'GND', '3': 'ADC0P', '4': 'GND', '6': 'ADC1P', '5': 'GND', '7': 'ADC2P', '8': 'GND', '10': 'ADC3P', '9': 'GND',
-   '20': '+3V3D', '19': 'GND', '18': 'ADC_CAP', '17': 'ADC_CLK', '16': 'MOSI', '15': 'MISO', '14': 'SCK', '12': 'CS_ADC',
-   '13': 'ADC_DRDY', '11': 'ADC_SYNC'}, mpn='ADS131M04IPWR', lcsc='C2862562', note='SMD (JLC place)')
+T(20, 400, 'ADC: ADS131M04, 4 simultaneous channels, +/-1.2 V FS. Each input = 4.02k/1k divider (/5.02, +/-5 V -> +/-1.0 V) + 10 nF (~20 kHz).|CH0 = V DC monitor, CH1 = I_HI, CH2 = I_LO, CH3 = AC V monitor. Clock: Pico GP21 8.000 MHz via JP6 (default) or X1 8.192 MHz.')
+# U21 ADS131M04 + decoupling, X1/R35/JP6 clock select moved to the HAT; dividers stay here and feed J17
 g = Grid(110, 420, 7, 22.86, 30.48)
 for ch, src in enumerate(['VDC_DRV', 'IHI_OUT', 'ILO_OUT', 'VAC_DRV']):
     R(f'R{50+2*ch}', '4.02k 0.1%', src, f'ADC{ch}P', g); R(f'R{51+2*ch}', '1k 0.1%', f'ADC{ch}P', 'GND', g)
     C(f'C{50+ch}', '10n C0G', f'ADC{ch}P', 'GND', g, fp='CD')
-C('C54', '220n', 'ADC_CAP', 'GND', g, fp='CD')
-C('C55', '100n', '+3V3A', 'GND', g, fp='CD'); C('C56', '1u', '+3V3A', 'GND', g, fp='CD')
-C('C57', '100n', '+3V3D', 'GND', g, fp='CD'); C('C58', '1u', '+3V3D', 'GND', g, fp='CD')
-P('X1', 'Oscillator:ACO-xxxMHz-A', '8.192MHz 3.3V CMOS', 'OSC', g(), {'1': '+3V3D', '7': 'GND', '8': 'XO_OUT', '14': '+3V3D'})
-R('R35', '33', 'XO_OUT', 'ADC_CLK', g); C('C59', '100n', '+3V3D', 'GND', g, fp='CD')
+R('R47', '33', 'HAT_CLK', 'PICO_GPCLK', g, note='GP21 clock source termination, at the Pico')
+PI = {1: '+3V3D', 17: '+3V3D', 2: '+5V', 4: '+5V', 19: 'MOSI', 21: 'MISO', 23: 'SCK', 24: 'CS_ADC', 26: 'CS_DAC',
+      7: 'HAT_CLK', 18: 'ADC_SYNC', 22: 'ADC_DRDY', **{n: 'GND' for n in (6, 9, 14, 20, 25, 30, 34, 39)}}
+P('J16', 'Connector_Generic:Conn_02x20_Odd_Even', 'ADC/DAC HAT (Pi 40-pin)', 'Connector_PinHeader_2.54mm:PinHeader_2x20_P2.54mm_Vertical',
+  g(), {str(k): v for k, v in PI.items()}, note='Raspberry Pi pinout: SPI0, CE0 = ADC, CE1 = DAC, GPIO4 = clock, GPIO24 SYNC, GPIO25 DRDY')
+P('J17', 'Connector_Generic:Conn_02x06_Odd_Even', 'ADC/DAC HAT analog', 'Connector_PinHeader_2.54mm:PinHeader_2x06_P2.54mm_Vertical', g(),
+  {'1': 'DAC_OUT', '3': 'DAC_REF', '5': 'ADC3P', '7': 'ADC2P', '9': 'ADC1P', '11': 'ADC0P', **{str(n): 'GND' for n in (2, 4, 6, 8, 10, 12)}})
 
 # ================================================================ CONTROLLER / DRIVERS  (x 290..830, y 370..580)
 T(290, 382, 'CONTROL: Pico 2 (socketed) drives CTL0..15 -> 2x TBD62783A high-side source drivers -> relay coils (off coils sit at 0 V).|J12 = CTL fallback header (Pico removed). 4.7k pulls set power-up state: ON = CTL3 (1M), CTL6 (DEV), CTL8 (RE_LOCAL).')
@@ -235,8 +232,8 @@ ctl_names = ['RNG_1k', 'RNG_10k', 'RNG_100k', 'RNG_1M', 'RNG_10M', 'RNG_100M', '
              'CAL_R', 'CAL_C', 'NULL_EN', 'NULL_RNG', 'VMODE_AC', 'DAC_EN']
 pico = {'3': 'PICO_GND', '8': 'PICO_GND', '13': 'PICO_GND', '18': 'PICO_GND', '23': 'PICO_GND', '28': 'PICO_GND',
         '33': 'PICO_GND', '38': 'PICO_GND', '39': 'VSYS', '30': 'PICO_RUN',
-        '21': 'MISO', '22': 'CS_ADC', '24': 'SCK', '25': 'MOSI', '26': 'CS_DAC', '27': 'ADC_DRDY', '29': 'ADC_SYNC',
-        '31': 'SYNC_IN', '32': 'AUX27', '34': 'AUX28'}
+        '21': 'MISO', '22': 'CS_ADC', '24': 'SCK', '25': 'MOSI', '26': 'CS_DAC', '27': 'PICO_GPCLK', '29': 'ADC_SYNC',
+        '31': 'SYNC_IN', '32': 'ADC_DRDY', '34': 'AUX28'}  # GP21 = GPOUT0 (ADC clock), GP27 = DRDY
 gp_pin = {0: 1, 1: 2, 2: 4, 3: 5, 4: 6, 5: 7, 6: 9, 7: 10, 8: 11, 9: 12, 10: 14, 11: 15, 12: 16, 13: 17, 14: 19, 15: 20}
 for gp, pin in gp_pin.items(): pico[str(pin)] = f'CTL{gp}'
 P('A1', 'afe:RPi_Pico_2', 'Raspberry Pi Pico 2', 'afe:RaspberryPi_Pico_2_THT', (330, 450), pico,
@@ -255,9 +252,9 @@ hdr = {str(n + 1): f'CTL{n}' for n in range(16)}; hdr.update({'17': 'GND', '18':
 P('J12', 'Connector_Generic:Conn_02x10_Odd_Even', 'CTL0..15 fallback', 'H2x10', (500, 470), hdr)
 P('J13', 'Connector_Generic:Conn_02x06_Odd_Even', 'SPI/AUX', 'H2x6', (540, 470),
   {'1': 'SCK', '2': 'MOSI', '3': 'MISO', '4': 'CS_ADC', '5': 'CS_DAC', '6': 'ADC_DRDY', '7': 'ADC_SYNC', '8': 'SYNC_IN',
-   '9': 'AUX27', '10': 'AUX28', '11': 'PICO_RUN', '12': 'GND'})
+   '9': 'HAT_CLK', '10': 'AUX28', '11': 'PICO_RUN', '12': 'GND'})
 g = Grid(580, 450, 6, 20.32, 20.32)
-R('R80', '10k', 'CS_ADC', '+3V3D', g); R('R81', '10k', 'CS_DAC', '+3V3D', g); R('R82', '10k', 'ADC_SYNC', '+3V3D', g)
+# R80-R82 (CS/SYNC pull-ups) moved to the HAT
 BNC('J11', 'SYNC_BNC', 'GND', g(), 'SYNC_IN')
 R('R83', '100k', 'SYNC_BNC', 'GND', g); R('R84', '10k', 'SYNC_BNC', 'SYNC_IN', g)
 P('D4', 'Diode:1N4148', '1N4148', 'DO35', g(), {'2': 'SYNC_IN', '1': '+3V3D'})

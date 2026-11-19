@@ -5,6 +5,7 @@ gi.require_version('Rsvg', '2.0')
 from gi.repository import Rsvg
 import cairo
 from common import PCB, W, H, OX, OY
+PCB = os.environ.get('PCB', PCB)
 
 out = sys.argv[1]
 layers = sys.argv[2] if len(sys.argv) > 2 else 'F.Cu,B.Cu,F.SilkS,Edge.Cuts'

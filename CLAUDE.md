@@ -4,7 +4,8 @@ Analog front end for impedance / C-V (1 MHz), DLTS and electrochemistry. The out
 
 ## Current state
 - **Rev B schematic is done and checked.** It passes KiCad 10 ERC with 0 errors and 0 warnings after "Update Symbols from Library". The exported netlist matches the design intent (176 nets, 0 mismatches).
-- **Rev B PCB layout has not been started.** That is the next job.
+- **Rev B PCB: first pass placed + critical nets pre-routed and locked** (`scripts/layout/place.py` then `preroute.py`). Not autorouted yet. DRC: silkscreen only, parity 0.
+- **ADC/DAC moved to a sub-board:** `adc_hat/` (own KiCad project, Pi Zero pHAT 65 × 30 mm, all SMD, JLC-assembled). It plugs onto main-board J16 (Pi 40-pin pinout, male) and J17 (2×6 analog), or stacks on a Pi Zero. Record: `scripts/hat/design.py`; schematic builder `scripts/hat/build_sch.py` (one-shot, overwrites hand edits); placement `scripts/hat/place.py`; BOM `scripts/hat/make_bom.py` → `docs/BOM_adc_hat.csv`.
 - `revA/` holds the superseded Rev A (schematic plus routed board, converted to KiCad 9/10). Use it for reference only.
 
 ## Source of truth
@@ -15,22 +16,24 @@ Analog front end for impedance / C-V (1 MHz), DLTS and electrochemistry. The out
   It compares against `design.py`. If the schematic is changed on purpose, update `design.py` to match, or note that the check is retired.
 - `scripts/schematic/` edits the existing KiCad schematic in place (wired drawing, power symbols, J14/J15). Its block scripts restart from a stripped state, so **re-running them overwrites hand edits in KiCad**; treat the KiCad file as the source from now on. `verify.sh REF.net` checks a schematic edit (net check, connectivity vs a reference netlist, ERC).
 - Rails are power symbols (global nets `GND`, `+15V`, `-15V`, `+5V`, `+3V3`, `+3V3A`, `+3V3D`, `PICO_GND`); every other net is a local label (`/NAME`). RV1/RV2 are off-board panel pots (excluded from the board) on J14/J15.
-- Project library `afe` (`afe.kicad_sym`, `afe.pretty/`): Pico 2 symbol and footprint, ADS131M04 and DAC80501 symbols, and the `DIP-8_SOIC-8_Combo` op-amp footprint.
+- Project library `afe` (`afe.kicad_sym`, `afe.pretty/`): Pico 2 symbol and footprint, ADS131M04 and DAC80501 symbols, and the `DIP-8_SOIC-8_Combo` op-amp footprint. `adc_hat/sym-lib-table` points at `../afe.kicad_sym`.
+- HAT check: `kicad-cli sch export netlist -o hat.net adc_hat/adc_hat.kicad_sch`, then run `scripts/check_net.py` with `scripts/hat` first on `sys.path` (so it imports the HAT `design.py`).
 
 ## Owner's preferences
 - Short responses with full technical detail. The owner is an experienced EE. Don't fabricate; ask when unsure.
 - **2-layer, JLCPCB** rules: 0.15 mm minimum track/space, 0.3 mm drill / 0.6 mm via. Use 0.25 mm default track and clearance.
-- **Through-hole** everywhere except: the SOIC half of the op-amp combo footprints, U20 DAC80501 (VSSOP-10) and U21 ADS131M04 (TSSOP-20). JLC places those two.
+- **Through-hole** on the main board everywhere except the SOIC half of the op-amp combo footprints. The ADC/DAC HAT is all SMD and JLC-assembled (its two sockets are THT on the bottom).
 - Keep fab outputs (Gerbers, CPL, JLC BOM, PDFs) **out of the repo**; they go in GitHub Releases. `docs/BOM_revB.csv` is a design document and stays.
 - Commit on `main` only when asked. The owner converts and edits in KiCad 10.
 
 ## Layout brief (Rev B)
 **Board:** larger than Rev A's 150 × 110 mm. Expect roughly 180–220 × 130–150 mm: 10 BNCs, 21 reed relays, DIP parts, a socketed Pico. Two layers, with the bottom layer a mostly unbroken ground plane.
 
-**Edge placement**
-- **Analog edge (BNCs):** CE, RE, GUARD, WE on one edge, near the control amp and TIA area. V_OUT, I_HI and I_LO on the same edge or an adjacent one. BIAS/PULSE and AC PROBE near the summer (U9/U10).
-- **Digital edge:** the Pico 2 (with USB reachable from the edge), J12 and J13 headers, the ADC/DAC/oscillator, and SYNC_IN, all at the **far edge from U2/U5**.
+**Edge placement (connectors on two opposite edges only, for an enclosure with end panels)**
+- **Front (bottom):** CE, RE, GUARD, WE, I_LO, I_HI, V_OUT. I_LO/I_HI/V_OUT lanes must stay right of the SUM_HI bus end (no crossings).
+- **Back (top):** J1 power, BIAS/PULSE + AC PROBE (summer U9/U10 below them), Pico USB, SYNC_IN, J13, the ADC/DAC HAT (back-right corner).
 - **Power:** J1 terminal block. The L7805 (≈1.5 W) gets room for a clip-on heatsink.
+- **Mounting holes:** H1 (GND, by J1) is the only chassis bond; H2–H9 isolated M3 NPTH; H10–H13 M2.5 HAT standoffs.
 
 **Critical nodes. Hand-route these first, then lock them.**
 1. **SUM_HI (WE / U5 pin 2):**
@@ -46,7 +49,7 @@ Analog front end for impedance / C-V (1 MHz), DLTS and electrochemistry. The out
 **Grounding**
 - Star point near J1, with separate returns from the analog area and the digital corner.
 - PICO_GND joins GND only through FB5 (JP5 can hard-tie it). Don't let the Pico ground pour merge into the analog plane except at that point.
-- No SPI, clock (X1 → ADC_CLK) or relay-coil traces through the input area.
+- No SPI, clock (GP21 / X1 → JP6 → ADC_CLK) or relay-coil traces through the input area.
 
 **Relays**
 - Coils are driven high-side by U22/U23 (KD0–KD15). Coil pin 5 goes to GND.

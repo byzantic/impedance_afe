@@ -47,114 +47,115 @@ def relay(ref, x, y, r):
     put(ref, x, y, r)
 
 
-# ================================================================ bottom BNC row (rot 180) + left-edge inputs
-for ref, x in [('J4', 20), ('J5', 44), ('J6', 64), ('J7', 104), ('J9', 172), ('J10', 192), ('J8', 211)]:
+# ================================================================ FRONT edge (bottom): cell + scope outputs (rot 180)
+# order: CE, RE, GUARD, WE, I_LO, I_HI, V_OUT.  I_LO/I_HI/V_OUT lanes lie right of the SUM_HI bus end (no crossings).
+for ref, x in [('J4', 17.5), ('J5', 35.0), ('J6', 52.5), ('J7', 91.0), ('J10', 179.0), ('J9', 196.0), ('J8', 212.0)]:
     put(ref, x, YB, 180)
-put('J2', 12.7, 62, 90)        # BIAS/PULSE
-put('J3', 12.7, 86, 90)        # AC PROBE
-put('J11', 207, 12.7, 0)       # SYNC_IN (top edge)
+# BACK edge (top): generator inputs + sync (rot 0, jack up)
+put('J3', 52.0, 12.7, 0)       # AC PROBE
+put('J2', 70.0, 12.7, 0)       # BIAS/PULSE
+put('J11', 171.0, 12.7, 0)     # SYNC_IN
 
 # ================================================================ high-gain TIA (U5) + SUM_HI comb
 # U5 rot 90: pin2 (-IN) bottom row, straight above the WE BNC pin.  SUM_HI bus at YBUS runs
 # right (ranges, steering transistors) and left (null-injection and cal relays).
-UX, UY = 105.27, YBUS - 8.0
+WEX = 91.0
+UX, UY = WEX + 1.27, YBUS - 8.0
 opamp('U5', UX, UY, None)
-put('C124', 109.0, 117.8, 90)      # +15V pin1 bottom, GND top (right of the output riser)
-put('C125', 101.2, 116.3, 0)       # GND, -15V (above U5, left of the output riser)
+put('C124', UX + 3.73, 117.8, 90)      # +15V pin1 bottom, GND top (right of the output riser)
+put('C125', UX - 4.07, 116.3, 0)       # GND, -15V (above U5, left of the output riser)
 # range columns, left to right: (Rf, Cf, relay, x of Rf, long Rf?)  K5/K6 get extra room (Coto option)
-# 100M nearest U5 -IN (leakage / PTFE-standoff option), 1k furthest.
-cols = [('R46', 'C46', 'K6', 113.2, True), ('R45', 'C45', 'K5', 122.6, True), ('R44', 'C44', 'K4', 132.0, True),
-        ('R43', 'C43', 'K3', 138.4, False), ('R42', 'C42', 'K2', 145.0, False), ('R41', 'C41', 'K1', 151.6, False)]
+# 100M nearest U5 -IN (leakage / PTFE-standoff option), 1k furthest.  Spacing: >=1.4 mm R-C, ~2.4 mm C-next R,
+# and a ~4 mm clear standoff gap between U5 and R46.
+cols = [('R46', 'C46', 'K6', WEX + 14.5, True), ('R45', 'C45', 'K5', WEX + 25.5, True), ('R44', 'C44', 'K4', WEX + 36.5, True),
+        ('R43', 'C43', 'K3', WEX + 46.5, False), ('R42', 'C42', 'K2', WEX + 56.0, False), ('R41', 'C41', 'K1', WEX + 65.5, False)]
 for r, c, k, x, long_ in cols:
     put(r, x, YBUS, 90)                                   # pin1 on bus, pin2 up
-    put(c, x + (3.6 if long_ else 2.9), YBUS, 90)
+    put(c, x + (5.0 if long_ else 4.0), YBUS, 90)
     rp = 20.32 if long_ else 10.16
     relay(k, x, YBUS - rp - 4.0, 90)                      # pin1 = FBn, pin7 = IHI_OUT on top
-put('Q1', 159.5, YBUS, 90)          # pins 1,2 SUM_HI (pin1 on bus), pin3 SUM_LO top
-put('Q2', 164.5, YBUS - 2.54, 270)  # pin3 SUM_HI on bus, pins 1,2 SUM_LO
+QX = WEX + 74.5
+put('Q1', QX, YBUS, 90)              # pins 1,2 SUM_HI (pin1 on bus), pin3 SUM_LO top
+put('Q2', QX + 5.0, YBUS - 2.54, 270)  # pin3 SUM_HI on bus, pins 1,2 SUM_LO
 # left branch: null injection relays nearest U5, cal relays further left (pin7 = SUM_HI on bus, pin1 up)
-relay('K16', 97.2, YBUS - 15.24, 270)
-relay('K15', 90.8, YBUS - 15.24, 270)
-relay('K13', 76.4, YBUS - 15.24, 270)
-relay('K11', 70.0, YBUS - 15.24, 270)
-# cal parts
-put('R18', 70.0, YBUS - 15.24 - 14.2, 270)                # pin1 CE_INT top, pin2 CALR_MID bottom
-put('C16', 73.2, YBUS - 15.24 - 6.1, 270)                 # pin1 CE_INT top, pin2 CALC_MID bottom
-relay('K12', 70.0, YBUS - 15.24 - 18.6, 90)               # NC to GND, pin1 CALR_MID bottom
-relay('K14', 76.4, YBUS - 15.24 - 10.8, 90)               # NC to GND, pin1 CALC_MID bottom
-# null injection parts (short HighZ stubs into K15/K16 pin1)
-put('C18', 90.8, YBUS - 15.24 - 6.1, 270)                 # NULLC_DRV top -> NULLC_INJ bottom
-relay('K17', 83.6, YBUS - 15.24 - 20.8, 270)              # pin1 NULLC_R top, pin7 NULLC_INJ bottom
-put('R30', 97.2, YBUS - 15.24 - 14.4, 270)                # NULLG_AC top -> NULLG_INJ bottom
-relay('K18', 102.6, YBUS - 15.24 - 20.8, 270)             # pin1 NULLG_R top, pin7 NULLG_INJ bottom
-put('C19', 83.6, 89.4, 270)                               # NULLC_DRV top -> NULLC_R bottom (K17 pin1)
-put('R31', 107.0, 66.0, 90)                               # NULLG_AC -> NULLG_R
-put('C20', 101.0, 69.0, 90)                               # NULLG_DRV -> NULLG_AC (film)
-opamp('U13', 90.0, 80.0, 'T')
-opamp('U14', 112.0, 80.0, 'T')
-opamp('U12', 92.0, 52.0, 'L')
-put('R28', 99.0, 46.0, 0); put('R29', 99.0, 49.5, 0)
-put('J14', 128.0, 61.0, 0)                # RV1 (panel C-null pot) cable, Molex KK 254
-put('J15', 128.0, 69.0, 0)                # RV2 (panel G-null pot) cable
-# low-gain TIA (between I_HI and I_LO BNCs)
-opamp('U6', 182.0, YBUS - 11.0, 'R')
-put('R33', 174.5, YBUS - 4.5, 90)         # SUM_LO bottom -> ILO_OUT top
-put('C27', 171.5, YBUS - 4.5, 90)
-put('R34', 196.0, YBUS - 8.76, 270)       # ILO_OUT top -> ILO_BNC bottom (J10)
-put('R32', 166.0, 101.0, 270)             # IHI_OUT top -> IHI_BNC bottom
+DX = UX - 105.27                     # left branch kept rigid relative to U5
+relay('K16', 97.2 + DX, YBUS - 15.24, 270)
+relay('K15', 90.8 + DX, YBUS - 15.24, 270)
+relay('K13', 76.4 + DX, YBUS - 15.24, 270)
+relay('K11', 70.0 + DX, YBUS - 15.24, 270)
+put('R18', 70.0 + DX, YBUS - 15.24 - 14.2, 270)           # pin1 CE_INT top, pin2 CALR_MID bottom
+put('C16', 73.2 + DX, YBUS - 15.24 - 6.1, 270)            # pin1 CE_INT top, pin2 CALC_MID bottom
+relay('K12', 70.0 + DX, YBUS - 15.24 - 18.6, 90)          # NC to GND, pin1 CALR_MID bottom
+relay('K14', 76.4 + DX, YBUS - 15.24 - 10.8, 90)          # NC to GND, pin1 CALC_MID bottom
+put('C18', 90.8 + DX, YBUS - 15.24 - 6.1, 270)            # NULLC_DRV top -> NULLC_INJ bottom
+relay('K17', 83.6 + DX, YBUS - 15.24 - 20.8, 270)         # pin1 NULLC_R top, pin7 NULLC_INJ bottom
+put('R30', 97.2 + DX, YBUS - 15.24 - 14.4, 270)           # NULLG_AC top -> NULLG_INJ bottom
+relay('K18', 102.6 + DX, YBUS - 15.24 - 20.8, 270)        # pin1 NULLG_R top, pin7 NULLG_INJ bottom
+put('C19', 83.6 + DX, 89.4, 270)                          # NULLC_DRV top -> NULLC_R bottom (K17 pin1)
+put('R31', 107.0 + DX, 66.0, 90)                          # NULLG_AC -> NULLG_R
+put('C20', 101.0 + DX, 69.0, 90)                          # NULLG_DRV -> NULLG_AC (film)
+opamp('U13', 90.0 + DX, 80.0, 'T')
+opamp('U14', 112.0 + DX, 80.0, 'T')
+opamp('U12', 92.0 + DX, 52.0, 'L')
+put('R28', 99.0 + DX, 46.0, 0); put('R29', 99.0 + DX, 49.5, 0)
+put('J14', 107.0, 55.5, 0)           # RV1 (panel C-null pot) cable, Molex KK 254
+put('J15', 107.0, 63.0, 0)           # RV2 (panel G-null pot) cable
 
-# ================================================================ V monitors -> V_OUT (bottom right)
-opamp('U8', 198.0, 82.0, 'L')
-opamp('U4', 198.0, 102.0, 'L')
-put('R21', 204.5, 92.5, 0); put('R22', 204.5, 96.0, 0)
-put('C17', 174.0, 77.5, 0); put('R23', 174.0, 81.5, 0)
-put('R24', 205.5, 79.0, 0); put('R25', 205.5, 82.5, 0)
-put('R26', 204.5, 106.0, 0); put('R27', 217.5, 106.0, 90)
-relay('K19', 210.4, 111.0, 270)      # NC: VDC_R -> VOUT (pin7 bottom, toward J8)
-relay('K20', 216.8, 111.0, 270)      # VAC_R -> VOUT
+# ---------------- low-gain TIA above Q1/Q2 (SUM_LO short and vertical; the I_LO / I_HI lanes stay clear)
+U6X, U6Y = QX + 2.5, 112.0
+put('U6', U6X, U6Y, 90)
+put('C126', U6X - 7.0, U6Y - 1.3, 90); put('C127', U6X - 7.0, U6Y + 1.3, 270)   # left: keeps the ILO_OUT corridor free
+put('R33', QX - 3.5, 121.5, 0)            # SUM_LO left -> ILO_OUT right (below U6)
+put('C27', QX, 124.6, 0)
+put('R34', 179.0, U6Y, 270)               # ILO_OUT top -> ILO_BNC bottom, lane straight down to J10
+put('R32', 196.0, 101.0, 270)             # IHI_OUT (bus end) top -> IHI_BNC bottom, lane down to J9
+
+# ================================================================ V monitors -> V_OUT (right, above the I_HI lane end)
+opamp('U4', 180.0, 87.0, 'B')             # DC monitor (VDIV -> VDC_DRV)
+opamp('U8', 200.0, 87.0, 'B')             # AC monitor (ACM_IN -> VAC_DRV)
+put('R21', 159.0, 78.0, 0); put('R22', 159.0, 81.5, 0); put('R26', 159.0, 85.0, 0)
+put('C17', 160.0, 89.0, 0); put('R23', 159.0, 92.5, 0)
+put('R24', 187.5, 78.0, 0)
+put('R25', 206.5, 79.0, 0); put('R27', 206.5, 82.5, 0)
+relay('K19', 206.0, 100.0, 270)      # NC: VDC_R -> VOUT (pin7 bottom, toward J8)
+relay('K20', 212.4, 100.0, 270)      # VAC_R -> VOUT
 
 # ================================================================ RE electrometer / guard / RE_MON
-U2X, U2Y = 42.73, YBUS - 15.5
+U2X, U2Y = 35.0 - 1.27, YBUS - 15.5
 opamp('U2', U2X, U2Y, 'R')
-put('R19', 44.0, YBUS + 1.4, 90)     # pin1 RE_BNC (bottom, by J5), pin2 RE_IN up to U2 pin3
-opamp('U3', 44.0, 101.0, 'R')
-opamp('U7', 58.0, 101.0, 'R')
-put('R20', 58.0, YBUS - 9.0, 270)    # GUARD_DRV top -> GUARD bottom (J6, J5 shell)
+put('R19', 35.0, YBUS + 1.4, 90)     # pin1 RE_BNC (bottom, by J5), pin2 RE_IN up to U2 pin3
+opamp('U3', 44.0, 102.0, 'L')
+opamp('U7', 44.0, 86.0, 'L')
+put('R20', 47.0, YBUS - 9.0, 270)    # GUARD_DRV top -> GUARD bottom (J6, J5 shell)
 
 # ================================================================ control amp / cell relays (bottom left)
-opamp('U1', 24.0, 119.0, 'R')
-relay('K9', 18.0, YBUS - 1.0, 0)     # CE_INT -> RE_BNC (pin7 right, toward R19/J5)
-relay('K10', 8.5, 112.0, 270)        # CE_INT top -> CE_BNC bottom
-relay('K7', 14.3, 107.5, 0)          # CTRL_OUT <-> CTRL_INV
-relay('K8', 14.3, 101.0, 0)          # PI_IN <-> CTRL_INV
-put('R15', 17.0, 95.6, 0)            # PI_Z -> CTRL_OUT
-put('C15', 30.5, 95.6, 0)            # CTRL_INV -> PI_Z
-put('R16', 34.5, 108.0, 90)          # RE_BUF -> PI_IN
-put('R17', 14.0, 115.0, 270)         # CTRL_OUT top -> CE_INT bottom
+opamp('U1', 18.0, 82.0, 'R')
+relay('K10', 8.5, 112.0, 270)        # CE_INT top -> CE_BNC bottom (J4)
+relay('K9', 24.0, 108.0, 270)        # CE_INT top -> RE_BNC bottom (to R19/J5)
+relay('K7', 4.5, 92.0, 0)            # CTRL_OUT <-> CTRL_INV
+relay('K8', 4.5, 98.5, 0)            # PI_IN <-> CTRL_INV
+put('R15', 4.5, 70.0, 0)             # PI_Z -> CTRL_OUT
+put('C15', 17.0, 70.0, 0)            # CTRL_INV -> PI_Z
+put('R16', 25.0, 104.0, 90)          # RE_BUF -> PI_IN
+put('R17', 15.0, 103.0, 270)         # CTRL_OUT top -> CE_INT bottom
 
-# ================================================================ inputs / summer (left edge)
-put('R1', 17.0, 54.0, 0); put('JP1', 31.0, 53.0, 0)
-put('R2', 17.0, 66.5, 0); put('R3', 17.0, 70.0, 0)
-put('R4', 17.0, 79.0, 0); put('JP2', 31.0, 78.0, 0)
-put('R5', 17.0, 82.5, 0); put('C12', 17.0, 89.0, 0)
-put('R6', 25.0, 89.0, 0)
-put('R7', 36.0, 85.0, 0); put('R8', 36.0, 81.5, 0)
-put('JP3', 49.0, 81.5, 0)
-opamp('U9', 44.0, 68.0, 'T')
-put('R11', 36.0, 77.0, 0); put('C13', 52.0, 77.0, 0)
-opamp('U10', 64.0, 68.0, 'T')
-put('R12', 54.0, 81.5, 0); put('R13', 54.0, 85.0, 0); put('C14', 70.0, 77.0, 0)
-put('R14', 54.0, 88.5, 0)
-relay('K21', 30.0, 46.0, 0)
-put('R9', 46.0, 54.5, 0); put('R10', 46.0, 51.0, 0)
+# ================================================================ drive inputs + summer (under the back-edge BNCs)
+put('R5', 44.0, 18.0, 270); put('R4', 48.0, 18.0, 270); put('JP2', 46.0, 31.5, 0)    # AC 100k, 50R term -> JP2
+put('C12', 52.5, 18.0, 270); put('R6', 57.0, 18.0, 270)                             # AC coupling 1u film, 1M bleed
+put('R7', 60.5, 18.0, 270); put('R8', 64.0, 18.0, 270); put('JP3', 58.0, 33.0, 0)  # x1 / x0.1 select
+put('R2', 67.5, 18.0, 270); put('R1', 71.0, 18.0, 270); put('R3', 74.5, 18.0, 270)  # BIAS 100k, 50R, 10k -> SUMIN
+put('JP1', 70.5, 31.5, 0)
+put('U9', 46.0, 50.0, 90); put('C100', 39.0, 48.7, 90); put('C101', 39.0, 51.3, 270)
+put('R11', 40.0, 60.0, 0); put('C13', 53.0, 60.0, 0)
+opamp('U10', 64.0, 50.0, 'T')
+put('R12', 58.0, 60.0, 0); put('C14', 72.0, 64.0, 0); put('R13', 58.0, 63.5, 0); put('R14', 58.0, 67.0, 0)
+relay('K21', 30.0, 66.0, 0)                                  # DAC_BIAS -> DAC_SW
+put('R9', 48.0, 71.0, 0); put('R10', 48.0, 74.5, 0)
 
-# ================================================================ bias DAC + level shift (top, left of drivers)
-put('U20', 56.0, 8.0, 0)
-put('JP4', 48.0, 4.0, 90); put('R36', 46.0, 14.0, 0)
-put('C24', 62.0, 4.0, 0); put('C25', 71.0, 6.0, 0); put('C26', 62.0, 14.0, 0)
-put('R37', 46.0, 20.0, 0); put('R38', 46.0, 23.5, 0); put('C22', 60.0, 23.5, 0)
-put('R39', 46.0, 27.0, 0); put('R40', 46.0, 30.5, 0); put('C23', 60.0, 30.5, 0)
-opamp('U11', 64.0, 40.0, 'L')
+# ================================================================ bias-DAC level shift (DAC_OUT / DAC_REF arrive on J17)
+opamp('U11', 127.0, 50.0, 'L')
+put('R37', 119.0, 60.0, 0); put('R38', 119.0, 63.5, 0); put('C22', 132.5, 63.5, 0)
+put('R39', 119.0, 67.0, 0); put('R40', 119.0, 70.5, 0); put('C23', 132.5, 70.5, 0)
 
 # ================================================================ power (top left); L7805 tab faces into the board
 put('J1', 4.0, 7.0, 0)
@@ -166,39 +167,51 @@ put('U25', 36.0, 4.0, 180)           # heatsink area kept clear below (y 6..20, 
 put('C5', 22.0, 4.0, 0); put('C6', 33.0, 26.0, 0); put('C7', 33.0, 34.0, 0)
 
 # ================================================================ relay drivers, pulls, fallback header
-put('U22', 127.0, 30.0, 270)         # inputs (1-9) top row, outputs (10-18) bottom row
-put('U23', 101.5, 30.0, 270)
-put('C60', 106.0, 42.0, 0); put('C61', 80.5, 42.0, 0)
+put('U22', 131.0, 30.0, 270)         # inputs (1-9) top row, outputs (10-18) bottom row
+put('U23', 105.5, 30.0, 270)
+put('C60', 110.0, 42.0, 0); put('C61', 84.5, 42.0, 0)
 for i in range(16):
     bank, k = divmod(i, 8)
-    x0 = 105.0 if bank == 0 else 79.5
+    x0 = 109.0 if bank == 0 else 83.5
     put(f'R{60+i}', x0 + 3.2 * k, 21.0, 90)
-put('J12', 84.0, 4.0, 90)
+put('J12', 88.0, 4.0, 90)
 
-# ================================================================ Pico, ADC, clock, 3V3, sync
+# ================================================================ Pico, 3V3, sync, HAT
 put('A1', 148.0, 27.0, 0)
 put('FB5', 141.0, 54.0, 270); put('JP5', 146.0, 55.0, 0)   # PICO_GND pins inside the Pico ground island
-put('D3', 161.5, 16.0, 90)
-put('J13', 163.5, 24.0, 0)
-put('R80', 170.5, 32.0, 90); put('R81', 173.7, 32.0, 90); put('R82', 176.9, 32.0, 90)
-put('U26', 168.0, 6.0, 0); put('C8', 174.0, 10.0, 90); put('C9', 177.5, 10.0, 90)
-put('FB3', 181.0, 14.0, 90); put('FB4', 184.5, 14.0, 90)
-put('C10', 189.0, 5.0, 0); put('C11', 189.0, 12.5, 0)
-put('R83', 203.0, 19.0, 0); put('R84', 203.0, 22.5, 0); put('D4', 204.0, 26.0, 0); put('D5', 204.0, 29.5, 0)
-put('X1', 171.0, 46.0, 0); put('C59', 182.0, 27.0, 90)
-put('U21', 194.0, 40.0, 0)
-put('R35', 186.0, 51.0, 0)
-put('C54', 200.0, 33.0, 0); put('C55', 186.0, 32.0, 90); put('C56', 189.0, 32.0, 90)
-put('C57', 200.0, 44.0, 0); put('C58', 200.0, 47.5, 0)
-for ch in range(4):
-    y = 55.0 + 3.5 * ch
-    put(f'R{50+2*ch}', 168.0, y, 0); put(f'R{51+2*ch}', 182.0, y, 0); put(f'C{50+ch}', 196.0, y, 0)
+put('D3', 160.9, 16.0, 90)
+put('J13', 182.0, 3.0, 0)                 # external SPI master port, back edge, clear of the Pico and the HAT
+put('R83', 163.5, 19.5, 0); put('R84', 163.5, 23.0, 0); put('D4', 164.5, 26.5, 0); put('D5', 164.5, 30.0, 0)
+put('U26', 177.0, 22.0, 0); put('C8', 176.5, 26.5, 0); put('C9', 176.5, 30.0, 0)
+put('FB4', 176.0, 34.0, 0); put('C11', 179.0, 40.0, 0)
+put('R47', 161.0, 46.0, 90)               # GP21 clock series R (pad 2 near A1 pin 27)
+for ch in range(4):                       # ADC dividers, rows just below J17 (HAT analog link)
+    y = 50.5 + 3.5 * ch                   # source -R(4.02k)- node -C- , -R(1k)- GND (R51.. pin2 under the HAT edge)
+    put(f'R{50+2*ch}', 160.0, y, 0); put(f'C{50+ch}', 172.4, y, 0); put(f'R{51+2*ch}', 179.6, y, 0)
+# HAT (Pi Zero pHAT, 65 x 30) rotated 90 CW: header along the right edge, analog link J17 facing the dividers.
+HAT = (188.0, 8.0)                        # main-board position of the HAT's top-left corner after rotation (x, y)
 
-# ================================================================ mounting holes
-put('H1', 4.0, 44.0); put('H2', 216.0, 40.0); put('H3', 4.0, 146.0); put('H4', 216.0, 60.0)
+
+def hat_xy(X, Y):
+    """HAT top-view coords (X along the header edge, Y away from it) -> main board"""
+    return HAT[0] + 30.0 - Y, HAT[1] + X
+
+
+put('J16', *hat_xy(8.37, 4.77), 0)       # PinHeader 2x20 (male): pin1 odd row, even pins outboard
+put('J17', *hat_xy(38.85, 25.23), 180)   # PinHeader 2x6 (male): pin1 at the DAC end
+for i, (X, Y) in enumerate([(3.5, 3.5), (61.5, 3.5), (3.5, 26.5), (61.5, 26.5)]):
+    put(f'H{10+i}', *hat_xy(X, Y))
+
+# ================================================================ mounting holes: H1 = GND star bond; others isolated
+put('H1', 4.0, 44.0)
+for ref, x, y in [('H2', 4.0, 146.0), ('H3', 71.5, 146.0), ('H4', 135.0, 146.0), ('H5', 216.0, 129.0),
+                  ('H6', 216.0, 4.0), ('H7', 4.0, 60.0), ('H8', 146.0, 72.0), ('H9', 120.0, 4.0)]:
+    put(ref, x, y)
 
 # keep-clear areas (drawn on User.Comments): name, x0, y0, x1, y1
-KEEPCLEAR = [('L7805 heatsink', 24.0, 6.0, 42.0, 20.0), ('PTFE standoff option (U5 -IN / R46)', 106.0, 129.6, 112.0, 134.4)]
+KEEPCLEAR = [('L7805 heatsink', 24.0, 6.0, 42.0, 20.0),
+             ('PTFE standoff option (U5 -IN / R46)', UX + 5.5, YBUS - 3.0, WEX + 11.5, YBUS + 3.0),
+             ('ADC/DAC HAT 65x30 (11 mm standoffs): nothing tall', HAT[0], HAT[1], HAT[0] + 30.0, HAT[1] + 65.0)]
 
 
 # ---------------------------------------------------------------- build

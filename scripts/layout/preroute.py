@@ -90,7 +90,7 @@ for r, c, k, x, long_ in place.cols:
     rp2, cp2, kp1 = pad_xy(b, r, 2), pad_xy(b, c, 2), pad_xy(b, k, 1)
     track(b, net, [cp2, (cp2[0], rp2[1]), rp2], 0.25)
     track(b, net, [rp2, kp1], 0.25)
-riser_x = 107.6
+riser_x = place.UX + 2.33
 u5out = pad_xy(b, 'U5', 6, smd=False)
 ylong, yshort = 88.0, 100.0
 k_long = [k for r, c, k, x, l in place.cols if l]
@@ -116,10 +116,23 @@ c27a, c27b = pad_xy(b, 'C27', 1), pad_xy(b, 'C27', 2)
 r33a, r33b = pad_xy(b, 'R33', 1), pad_xy(b, 'R33', 2)
 u6in = pad_xy(b, 'U6', 2, smd=False)
 u6out = pad_xy(b, 'U6', 6, smd=False)
+r34a, r34b = pad_xy(b, 'R34', 1), pad_xy(b, 'R34', 2)
+# SUM_LO: Q1 C / Q2 B+E -> C27 -> R33 -> U6 -IN (short, vertical, 45-degree legs)
 track(b, 'SUM_LO', [q1c, q2a, q2b], 0.25)
-track(b, 'SUM_LO', [q2a, (c27a[0] - (q2a[1] - c27a[1]), q2a[1]), c27a, r33a, (u6in[0], r33a[1]), u6in], 0.25)
-yfb = u6out[1] - 2.6
-track(b, 'ILO_OUT', [c27b, (c27b[0], r33b[1]), r33b, (r33b[0] + 1.0, yfb), (u6out[0], yfb), u6out], 0.3)
+d = c27a[1] - r33a[1]
+track(b, 'SUM_LO', [q1c, c27a, (c27a[0] - d, r33a[1]), r33a], 0.25)
+d = u6in[0] - r33a[0]
+track(b, 'SUM_LO', [r33a, (r33a[0], u6in[1] + d), u6in], 0.25)
+# ILO_OUT: C27/R33 -> corridor right of U6 -> R34; U6 out over the top into the same corridor
+xc = u6out[0] + 5.23
+d = c27b[1] - r33b[1]
+track(b, 'ILO_OUT', [c27b, (c27b[0] + d, r33b[1]), r33b], 0.3)
+track(b, 'ILO_OUT', [r33b, (xc, r33b[1] - (xc - r33b[0])), (xc, r34a[1]), r34a], 0.3)
+yt = u6out[1] - 1.7
+track(b, 'ILO_OUT', [u6out, (u6out[0], yt), (xc, yt), (xc, r34a[1])], 0.3)
+# output lanes straight down to the BNCs
+track(b, 'ILO_BNC', [r34b, pad_xy(b, 'J10', 1)], 0.3)
+track(b, 'IHI_BNC', [pad_xy(b, 'R32', 2), pad_xy(b, 'J9', 1)], 0.3)
 
 # ================================================================ nuller injection, cal mid-nodes
 k17, c18, k15 = pad_xy(b, 'K17', 7), pad_xy(b, 'C18', 2), pad_xy(b, 'K15', 1)
@@ -162,11 +175,14 @@ def rect(x0, y0, x1, y1):
 m = 0.5
 for lay in (FC, BC):
     zone('GND', lay, rect(m, m, W - m, H - m), 0, name='GND plane')
-    zone('PICO_GND', lay, rect(135.5, m, 160.5, 56.0), 1, name='Pico ground (joins GND via FB5/JP5 only)')
+    zone('PICO_GND', lay, rect(135.5, m, 159.3, 56.0), 1, name='Pico ground (joins GND via FB5/JP5 only)')
     # driven guard (RE_BUF = U2 output) around RE_IN: R19 pin2 -> U2 pin3 and its combo join
-    zone('RE_BUF', lay, rect(38.2, 114.3, 48.9, 126.2), 2, name='RE_BUF guard')
+    ux = place.U2X
+    zone('RE_BUF', lay, rect(ux - 4.53, 114.3, ux + 6.17, 126.2), 2, name='RE_BUF guard')
     # GUARD (U3-driven, J5 shell) around the RE_BNC run from K9 to R19/J5
-    zone('GUARD', lay, [(31.0, 129.0), (48.6, 129.0), (48.6, 138.6), (42.2, 138.6), (42.2, 136.2), (31.0, 136.2)], 2,
+    k9x, k9y = pad_xy(b, 'K9', 7); jx = pad_xy(b, 'J5', 1)[0]
+    zone('GUARD', lay, [(k9x - 2.5, k9y - 1.7), (k9x + 3.8, k9y - 1.7), (k9x + 3.8, 126.6), (jx + 3.5, 126.6),
+                         (jx + 3.5, 138.6), (jx - 3.5, 138.6), (jx - 3.5, 136.6), (k9x - 2.5, 126.6)], 2,
          name='GUARD around RE_BNC')
 
 # ================================================================ SUM_HI guard: stitching vias + mask-free band over the GND pour

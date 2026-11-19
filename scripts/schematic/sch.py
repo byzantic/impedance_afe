@@ -64,6 +64,7 @@ def rot(x, y, deg):
 class Sch:
     def __init__(self, path=SCH):
         self.path = path
+        self.project = os.path.splitext(os.path.basename(path))[0]
         self.t = parse(open(path).read())
         self.root_uuid = val(find1(self.t, 'uuid'))
         self.libs = {val(s): s for s in find(find1(self.t, 'lib_symbols'), 'symbol')}
@@ -217,7 +218,7 @@ class Sch:
         self._insert([A('no_connect'), [A('at'), A(fmt(snap(x))), A(fmt(snap(y)))], [A('uuid'), uid()]])
 
     def text(self, s, x, y, size=1.27):
-        self._insert([A('text'), S(s), [A('exclude_from_sim'), A('no')], [A('at'), A(fmt(x)), A(fmt(y)), A('0')],
+        self._insert([A('text'), S(s.replace('\n', '\\n')), [A('exclude_from_sim'), A('no')], [A('at'), A(fmt(x)), A(fmt(y)), A('0')],
                       [A('effects'), [A('font'), [A('size'), A(fmt(size)), A(fmt(size))]], [A('justify'), A('left'), A('bottom')]],
                       [A('uuid'), uid()]])
 
@@ -245,7 +246,7 @@ class Sch:
                 prop('Reference', ref, 0, 0, True), prop('Value', value, vdx, vdy, False),
                 prop('Footprint', '', 0, 0, True), prop('Datasheet', '', 0, 0, True), prop('Description', '', 0, 0, True),
                 [A('pin'), S('1'), [A('uuid'), uid()]],
-                [A('instances'), [A('project'), S('impedance_afe'), [A('path'), S('/' + self.root_uuid),
+                [A('instances'), [A('project'), S(self.project), [A('path'), S('/' + self.root_uuid),
                                                                      [A('reference'), S(ref)], [A('unit'), A('1')]]]]]
         self._insert(node)
         return node
@@ -273,7 +274,7 @@ class Sch:
             node.append(prop(k, v, 0, 0, True))
         for n in pins:
             node.append([A('pin'), S(n), [A('uuid'), uid()]])
-        node.append([A('instances'), [A('project'), S('impedance_afe'), [A('path'), S('/' + self.root_uuid),
+        node.append([A('instances'), [A('project'), S(self.project), [A('path'), S('/' + self.root_uuid),
                                                                           [A('reference'), S(ref)], [A('unit'), A('1')]]]])
         self._insert(node)
         return node
