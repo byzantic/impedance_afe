@@ -148,30 +148,6 @@ track(b, 'CALC_MID', [k14, k13], 0.25)
 track(b, 'CALC_MID', [c16, (k13[0], c16[1])], 0.25)
 
 
-# ================================================================ CTL0..15: Pico -> pull -> driver input (F.Cu, planar)
-# Slot n (n-th pull from the left) carries CTLn = GPn and feeds driver channel 15-n.  Pico lanes nest: GP0 (top pin)
-# runs highest and goes furthest left.  Lanes 0-3 run above the pull row and drop beside their resistor; lanes 4-15
-# run under the resistor bodies.  Fan-in beside the Pico: pins below their lane turn at decreasing x going down.
-GP_PIN = {0: 1, 1: 2, 2: 4, 3: 5, 4: 6, 5: 7, 6: 9, 7: 10, 8: 11, 9: 12, 10: 14, 11: 15, 12: 16, 13: 17, 14: 19, 15: 20}
-for n in range(16):
-    ch = 15 - n
-    r = f'R{60+ch}'
-    p1 = pad_xy(b, r, 1)
-    net = pnet(r, 1)
-    assert net == N(f'CTL{n}') == pnet('A1', GP_PIN[n]), (n, net)
-    dp = pad_xy(b, 'U22', ch + 1) if ch < 8 else pad_xy(b, 'U23', ch - 7)
-    track(b, net, [p1, (p1[0], dp[1] - abs(dp[0] - p1[0])), dp], 0.25)
-    gp = pad_xy(b, 'A1', GP_PIN[n])
-    h = 5.7 + 0.8 * n if n < 4 else 12.3 + 0.65 * (n - 4)
-    t = 136.0 + 0.8 * n if gp[1] < h else 137.6 - 0.55 * (n - 2)
-    pts = [gp, (t, gp[1]), (t, h)]
-    if n < 4:
-        xd = p1[0] + 1.6
-        pts += [(xd, h), (xd, 19.6), p1]
-    else:
-        pts += [(p1[0], h), p1]
-    track(b, net, pts, 0.25)
-
 # ================================================================ zones
 def zone(net, layer, pts, prio=0, clearance=None, name=''):
     z = pcbnew.ZONE(b)
@@ -199,7 +175,9 @@ def rect(x0, y0, x1, y1):
 m = 0.5
 for lay in (FC, BC):
     zone('GND', lay, rect(m, m, W - m, H - m), 0, name='GND plane')
-    zone('PICO_GND', lay, rect(135.5, m, 159.3, 56.0), 1, name='Pico ground (joins GND via FB5/JP5 only)')
+    yb = place.ISLAND_Y                    # island: under the module, plus a tab at the bottom-left for JP5 pin 1
+    zone('PICO_GND', lay, [(133.0, m), (159.3, m), (159.3, yb), (129.5, yb), (129.5, yb - 5.0), (133.0, yb - 5.0)], 1,
+         name='Controller ground (joins GND via FB5/JP5 only)')
     # driven guard (RE_BUF = U2 output) around RE_IN: R19 pin2 -> U2 pin3 and its combo join
     ux = place.U2X
     zone('RE_BUF', lay, rect(ux - 4.53, 114.3, ux + 6.17, 126.2), 2, name='RE_BUF guard')

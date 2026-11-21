@@ -223,39 +223,58 @@ PI = {1: '+3V3D', 17: '+3V3D', 2: '+5V', 4: '+5V', 19: 'MOSI', 21: 'MISO', 23: '
       7: 'HAT_CLK', 18: 'ADC_SYNC', 22: 'ADC_DRDY', **{n: 'GND' for n in (6, 9, 14, 20, 25, 30, 34, 39)}}
 P('J16', 'Connector_Generic:Conn_02x20_Odd_Even', 'ADC/DAC HAT (Pi 40-pin)', 'Connector_PinHeader_2.54mm:PinHeader_2x20_P2.54mm_Vertical',
   g(), {str(k): v for k, v in PI.items()}, note='Raspberry Pi pinout: SPI0, CE0 = ADC, CE1 = DAC, GPIO4 = clock, GPIO24 SYNC, GPIO25 DRDY')
+# signals on the even row (the row facing the dividers on the board), GND on the odd row
 P('J17', 'Connector_Generic:Conn_02x06_Odd_Even', 'ADC/DAC HAT analog', 'Connector_PinHeader_2.54mm:PinHeader_2x06_P2.54mm_Vertical', g(),
-  {'1': 'DAC_OUT', '3': 'DAC_REF', '5': 'ADC3P', '7': 'ADC2P', '9': 'ADC1P', '11': 'ADC0P', **{str(n): 'GND' for n in (2, 4, 6, 8, 10, 12)}})
+  {'2': 'DAC_OUT', '4': 'DAC_REF', '6': 'ADC3P', '8': 'ADC2P', '10': 'ADC1P', '12': 'ADC0P', **{str(n): 'GND' for n in (1, 3, 5, 7, 9, 11)}})
 
 # ================================================================ CONTROLLER / DRIVERS  (x 290..830, y 370..580)
-T(290, 382, 'CONTROL: Pico 2 (socketed) drives CTL0..15 -> 2x TBD62783A high-side source drivers -> relay coils (off coils sit at 0 V).|J12 = CTL fallback header (Pico removed). 4.7k pulls set power-up state: ON = CTL3 (1M), CTL6 (DEV), CTL8 (RE_LOCAL).')
+T(290, 382, 'CONTROL: Pico 2 or ESP32-S3-ETH (socketed) -> SPI -> 2x 74HC595 (CTL0..15) -> 2x TBD62783A high-side drivers -> relay coils.|RLY_OE is pulled high (595 outputs off) until firmware enables them; the 4.7k pulls set the power-up state: ON = CTL3 (1M), CTL6 (DEV), CTL8 (RE_LOCAL).')
 ctl_names = ['RNG_1k', 'RNG_10k', 'RNG_100k', 'RNG_1M', 'RNG_10M', 'RNG_100M', 'DEV', 'PSTAT', 'RE_LOCAL', 'CELL',
              'CAL_R', 'CAL_C', 'NULL_EN', 'NULL_RNG', 'VMODE_AC', 'DAC_EN']
+# Header pins chosen to be usable on both a Pico 2 and a Waveshare ESP32-S3-ETH (Pico-pinout, 72.8 mm long):
+# pin: Pico GP / ESP32-S3 GPIO.  ESP32 pins avoided: 1-2 USB, 6-7 straps, 15-17/19-20 octal PSRAM, 35 RGB LED.
 pico = {'3': 'PICO_GND', '8': 'PICO_GND', '13': 'PICO_GND', '18': 'PICO_GND', '23': 'PICO_GND', '28': 'PICO_GND',
         '33': 'PICO_GND', '38': 'PICO_GND', '39': 'VSYS', '30': 'PICO_RUN',
-        '21': 'MISO', '22': 'CS_ADC', '24': 'SCK', '25': 'MOSI', '26': 'CS_DAC', '27': 'PICO_GPCLK', '29': 'ADC_SYNC',
-        '31': 'SYNC_IN', '32': 'ADC_DRDY', '34': 'AUX28'}  # GP21 = GPOUT0 (ADC clock), GP27 = DRDY
-gp_pin = {0: 1, 1: 2, 2: 4, 3: 5, 4: 6, 5: 7, 6: 9, 7: 10, 8: 11, 9: 12, 10: 14, 11: 15, 12: 16, 13: 17, 14: 19, 15: 20}
-for gp, pin in gp_pin.items(): pico[str(pin)] = f'CTL{gp}'
-P('A1', 'afe:RPi_Pico_2', 'Raspberry Pi Pico 2', 'afe:RaspberryPi_Pico_2_THT', (330, 450), pico,
-  mpn='SC1631 (Pico 2) on 2x 1x20 sockets')
+        '4': 'RLY_LATCH',    # GP2  / IO48
+        '5': 'RLY_OE',       # GP3  / IO47
+        '21': 'AUX',         # GP16 / IO43 (ESP UART0 TX: boot log)
+        '22': 'SYNC_IN',     # GP17 / IO44
+        '24': 'ADC_SYNC',    # GP18 / IO0 (ESP boot strap: held high by the HAT pull-up)
+        '25': 'MOSI',        # GP19 / IO1   SPI0 TX
+        '26': 'MISO',        # GP20 / IO2   SPI0 RX
+        '27': 'PICO_GPCLK',  # GP21 / IO3   GPOUT0 8.000 MHz (ESP: unused, HAT runs from its own XO)
+        '29': 'SCK',         # GP22 / IO15  SPI0 SCK
+        '31': 'CS_ADC',      # GP26 / IO18
+        '32': 'CS_DAC',      # GP27 / IO16
+        '34': 'ADC_DRDY'}    # GP28 / IO17
+P('A1', 'afe:RPi_Pico_2', 'Raspberry Pi Pico 2', 'afe:Pico2_ESP32-S3-ETH_THT', (330, 450), pico,
+  mpn='SC1631 (Pico 2) or Waveshare ESP32-S3-ETH, on 2x 1x20 sockets')
+# 74HC595 chain: MOSI -> U27 -> U28.  QA..QH -> CTL in board left-to-right order (QA wraps round the package end).
+SR = {'16': '+3V3D', '8': 'GND', '10': '+3V3D', '11': 'SCK', '12': 'RLY_LATCH', '13': 'RLY_OE'}
+P('U27', '74xx:74HC595', '74HC595', 'Package_DIP:DIP-16_W7.62mm_Socket', (380, 400),
+  {**SR, '14': 'MOSI', '9': 'SR_CHAIN', '15': 'CTL0', **{str(i): f'CTL{i}' for i in range(1, 8)}})
+P('U28', '74xx:74HC595', '74HC595', 'Package_DIP:DIP-16_W7.62mm_Socket', (380, 420),
+  {**SR, '14': 'SR_CHAIN', '15': 'CTL8', **{str(i): f'CTL{i + 8}' for i in range(1, 8)}},
+  note='QH (pin 9) unused')
+R('R76', '10k', 'RLY_OE', '+3V3D', (400, 400), note='595 outputs off (Hi-Z) until firmware drives RLY_OE low')
+C('C62', '100n', '+3V3D', 'GND', (400, 410)); C('C63', '100n', '+3V3D', 'GND', (400, 420))
 P('U22', 'Transistor_Array:TBD62783A', 'TBD62783APG', 'DIP18', (430, 430),
   {**{str(i + 1): f'CTL{15 - i}' for i in range(8)}, **{str(18 - i): f'KD{i}' for i in range(8)}, '9': '+5V', '10': 'GND'},
   note='internal output clamp diodes; VIN(on) 2.0 V min')
 P('U23', 'Transistor_Array:TBD62783A', 'TBD62783APG', 'DIP18', (430, 495),
   {**{str(i + 1): f'CTL{7 - i}' for i in range(8)}, **{str(18 - i): f'KD{i+8}' for i in range(8)}, '9': '+5V', '10': 'GND'})
-# Driver channel m (input -> KDm -> relay function m) is driven by CTL(15-m) = Pico GP(15-m) = J12 pin 16-m.
-# The reversal is for routing (pulls, driver inputs and Pico pins all in one nested order); firmware maps it.
+# Driver channel m (input -> KDm -> relay function m) is driven by CTL(15-m); CTLn comes from 595 output n
+# (U27 QA..QH = CTL0..7, U28 QA..QH = CTL8..15).  The order is for routing; firmware maps it.
 C('C60', '100n', '+5V', 'GND', (455, 415), fp='CD'); C('C61', '100n', '+5V', 'GND', (455, 480), fp='CD')
 g = Grid(480, 395, 8, 15.24, 20.32)
 for n in range(16):
     # R(60+n) belongs to driver channel n (function n), whose input is CTL(15-n)
     if n in (3, 6, 8): R(f'R{60+n}', '4.7k', f'CTL{15-n}', '+3V3D', g, note='pull-up: ON at power-up')
-    else: R(f'R{60+n}', '4.7k', f'CTL{15-n}', 'GND', g, note='pull-down: OFF at power-up (<=8.2k for RP2350 GPIO erratum)')
-hdr = {str(n + 1): f'CTL{n}' for n in range(16)}; hdr.update({'17': 'GND', '18': 'GND', '19': 'GND', '20': 'GND'})
-P('J12', 'Connector_Generic:Conn_02x10_Odd_Even', 'CTL0..15 fallback', 'H2x10', (500, 470), hdr)
-P('J13', 'Connector_Generic:Conn_02x06_Odd_Even', 'SPI/AUX', 'H2x6', (540, 470),
+    else: R(f'R{60+n}', '4.7k', f'CTL{15-n}', 'GND', g, note='pull-down: OFF at power-up')
+P('J13', 'Connector_Generic:Conn_02x08_Odd_Even', 'SPI/AUX', 'Connector_IDC:IDC-Header_2x08_P2.54mm_Horizontal', (540, 470),
   {'1': 'SCK', '2': 'MOSI', '3': 'MISO', '4': 'CS_ADC', '5': 'CS_DAC', '6': 'ADC_DRDY', '7': 'ADC_SYNC', '8': 'SYNC_IN',
-   '9': 'HAT_CLK', '10': 'AUX28', '11': 'PICO_RUN', '12': 'GND'})
+   '9': 'HAT_CLK', '10': 'AUX', '11': 'RLY_LATCH', '12': 'RLY_OE', '13': 'PICO_RUN', '14': 'GND', '15': 'GND', '16': 'GND'},
+  mpn='2x8 shrouded box header, right angle', note='external SPI master port: HAT and relays with the controller absent or in reset')
 g = Grid(580, 450, 6, 20.32, 20.32)
 # R80-R82 (CS/SYNC pull-ups) moved to the HAT
 BNC('J11', 'SYNC_BNC', 'GND', g(), 'SYNC_IN')

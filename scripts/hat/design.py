@@ -29,9 +29,10 @@ PI = {1: '+3V3', 17: '+3V3', 2: '+5V', 4: '+5V', 19: 'MOSI', 21: 'MISO', 23: 'SC
       7: 'CLK_IN', 18: 'SYNC', 22: 'DRDY', **{n: 'GND' for n in (6, 9, 14, 20, 25, 30, 34, 39)}}
 P('J1', 'Connector_Generic:Conn_02x20_Odd_Even', 'Pi 40-pin', 'Connector_PinSocket_2.54mm:PinSocket_2x20_P2.54mm_Vertical',
   PI, mpn='2x20 female 2.54 mm, 8.5 mm (Pi HAT stacking height)', note='bottom side; ID_SD/ID_SC (27/28) unused')
-# pin 1 is at the DAC end (right, top view); channels then run IN3..IN0 towards the left, matching U1's pin order
-AN = {1: 'DAC_OUT', 2: 'GND', 3: 'DAC_REF', 4: 'GND', 5: 'IN3P', 6: 'IN3N', 7: 'IN2P', 8: 'IN2N',
-      9: 'IN1P', 10: 'IN1N', 11: 'IN0P', 12: 'IN0N'}
+# pin 1 is at the DAC end (right, top view); channels then run IN3..IN0 towards the left, matching U1's pin order.
+# Signals (DAC, INnP) on the even row: on the main board that row faces the ADC dividers.
+AN = {2: 'DAC_OUT', 1: 'GND', 4: 'DAC_REF', 3: 'GND', 6: 'IN3P', 5: 'IN3N', 8: 'IN2P', 7: 'IN2N',
+      10: 'IN1P', 9: 'IN1N', 12: 'IN0P', 11: 'IN0N'}
 P('J2', 'Connector_Generic:Conn_02x06_Odd_Even', 'Analog', 'Connector_PinSocket_2.54mm:PinSocket_2x06_P2.54mm_Vertical',
   AN, mpn='2x6 female 2.54 mm, 8.5 mm', note='bottom side; mates main-board J17 (INnN tied to GND there)')
 

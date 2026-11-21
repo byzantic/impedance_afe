@@ -4,7 +4,8 @@ Analog front end for impedance / C-V (1 MHz), DLTS and electrochemistry. The out
 
 ## Current state
 - **Rev B schematic is done and checked.** It passes KiCad 10 ERC with 0 errors and 0 warnings after "Update Symbols from Library". The exported netlist matches the design intent (176 nets, 0 mismatches).
-- **Rev B PCB: first pass placed + critical nets pre-routed and locked** (`scripts/layout/place.py` then `preroute.py`). Not autorouted yet. DRC: silkscreen only, parity 0.
+- **Rev B PCB: second pass placed + critical nets pre-routed and locked** (`scripts/layout/place.py` then `preroute.py`; both rebuild from scratch). 248 × 150 mm. Not autorouted yet; the owner wants to adjust placement by hand first. DRC: silkscreen only, parity 0.
+- **Controller:** A1 socket takes a Pico 2 or a Waveshare ESP32-S3-ETH (footprint `afe:Pico2_ESP32-S3-ETH_THT`). Relays are driven from SPI via 2× 74HC595 (U27/U28, RLY_LATCH/RLY_OE); J12 is gone; J13 is a 2×8 right-angle box header. Pin map: README "Controller header".
 - **ADC/DAC moved to a sub-board:** `adc_hat/` (own KiCad project, Pi Zero pHAT 65 × 30 mm, all SMD, JLC-assembled). It plugs onto main-board J16 (Pi 40-pin pinout, male) and J17 (2×6 analog), or stacks on a Pi Zero. Record: `scripts/hat/design.py`; schematic builder `scripts/hat/build_sch.py` (one-shot, overwrites hand edits); placement `scripts/hat/place.py`; BOM `scripts/hat/make_bom.py` → `docs/BOM_adc_hat.csv`.
 - `revA/` holds the superseded Rev A (schematic plus routed board, converted to KiCad 9/10). Use it for reference only.
 
@@ -27,11 +28,11 @@ Analog front end for impedance / C-V (1 MHz), DLTS and electrochemistry. The out
 - Commit on `main` only when asked. The owner converts and edits in KiCad 10.
 
 ## Layout brief (Rev B)
-**Board:** larger than Rev A's 150 × 110 mm. Expect roughly 180–220 × 130–150 mm: 10 BNCs, 21 reed relays, DIP parts, a socketed Pico. Two layers, with the bottom layer a mostly unbroken ground plane.
+**Board:** 248 × 150 mm: 10 BNCs, 21 reed relays, DIP parts, a socketed Pico 2 / ESP32-S3-ETH. Two layers, with the bottom layer a mostly unbroken ground plane.
 
 **Edge placement (connectors on two opposite edges only, for an enclosure with end panels)**
-- **Front (bottom):** CE, RE, GUARD, WE, I_LO, I_HI, V_OUT. I_LO/I_HI/V_OUT lanes must stay right of the SUM_HI bus end (no crossings).
-- **Back (top):** J1 power, BIAS/PULSE + AC PROBE (summer U9/U10 below them), Pico USB, SYNC_IN, J13, the ADC/DAC HAT (back-right corner).
+- **Front (bottom):** CE, RE, GUARD, WE, I_LO, I_HI, V_OUT. Pitch 26.5 mm either side of RE (insulated socket), 24 mm on the outputs. GUARD (J6) must stay left of K11 (SUM_HI bus left end). I_LO/I_HI/V_OUT lanes must stay right of the SUM_HI bus end (no crossings).
+- **Back (top):** J1 power, BIAS/PULSE + AC PROBE (summer U9/U10 below them), 74HC595s, controller (ESP32 RJ45/USB end at the edge; keep the microSD access area below the module clear), SYNC_IN, J13 (back-right corner) with the ADC/DAC HAT below it.
 - **Power:** J1 terminal block. The L7805 (≈1.5 W) gets room for a clip-on heatsink.
 - **Mounting holes:** H1 (GND, by J1) is the only chassis bond; H2–H9 isolated M3 NPTH; H10–H13 M2.5 HAT standoffs.
 
@@ -48,7 +49,7 @@ Analog front end for impedance / C-V (1 MHz), DLTS and electrochemistry. The out
 
 **Grounding**
 - Star point near J1, with separate returns from the analog area and the digital corner.
-- PICO_GND joins GND only through FB5 (JP5 can hard-tie it). Don't let the Pico ground pour merge into the analog plane except at that point.
+- PICO_GND joins GND only through FB5 (JP5 can hard-tie it). Don't let the controller ground pour merge into the analog plane except at that point.
 - No SPI, clock (GP21 / X1 → JP6 → ADC_CLK) or relay-coil traces through the input area.
 
 **Relays**
@@ -74,4 +75,4 @@ Rev A used KiCad 7's SWIG `pcbnew` Python module. **KiCad 10 may not ship it** (
 - Report anything not done or not verified. Don't claim DRC is clean without running it.
 
 ## Open items (from the README; don't silently resolve them)
-DAC80501 SPI2C level for SPI mode (JP4) · reed relay pinouts · Coto relay footprint for the precision 10M/100M ranges · 2N3904 C-B leakage · RP2350 GPIO pull-down erratum (4.7 k pulls fitted) · PI loop tuning · firmware not yet written.
+DAC80501 SPI2C level for SPI mode (HAT JP2) · reed relay pinouts · Coto relay footprint for the precision 10M/100M ranges · 2N3904 C-B leakage · ESP32-S3-ETH supply current vs the L7805 heatsink, and its header map (from Waveshare's drawing) to confirm on a module · ADS131M04 CLKIN range at 8.000 MHz · PI loop tuning · firmware not yet written.

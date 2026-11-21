@@ -15,7 +15,7 @@ PCB = os.path.join(ROOT, 'impedance_afe.kicad_pcb')
 SCH = os.path.join(ROOT, 'impedance_afe.kicad_sch')
 FPDIR = '/usr/share/kicad/footprints'
 OX, OY = 40.0, 30.0
-W, H = 220.0, 150.0
+W, H = 248.0, 150.0
 
 
 def mm(v):
