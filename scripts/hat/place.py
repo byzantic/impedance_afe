@@ -15,20 +15,22 @@ W, H, RC = 65.0, 30.0, 3.0
 HOLES = [(3.5, 3.5), (61.5, 3.5), (3.5, 26.5), (61.5, 26.5)]
 # Pi header (top view): pin 1 at the left end of the inner row; even pins on the board-edge row.
 PI1 = (32.5 - 9.5 * 2.54, 3.5 + 1.27)
-J2_1 = (32.5 + 2.5 * 2.54, 26.5 - 1.27)        # analog 2x6: odd row inner, pin 1 at the RIGHT end (socket chirality)
+J2_1 = (32.5 - 5.5 * 2.54, 27.5)               # analog 1x12 along the bottom edge, pin 1 at the left (top view)
 
 
 PL = {
-    'U1': (30.0, 14.0, 90), 'U2': (48.5, 14.5, 0), 'U3': (12.5, 14.0, 0),
-    # clock: Y1 -> R1 -> JP1 -> U1 CLKIN (pin 17, top row)
-    'Y1': (16.6, 9.5, 0), 'C10': (16.6, 6.6, 0), 'R1': (20.6, 7.4, 0), 'JP1': (24.8, 7.4, 0),
-    # LDO in/out, AVDD (pin 1, bottom-left), DVDD (pin 20, top-left), CAP (pin 18)
-    'C1': (9.0, 14.0, 90), 'C15': (9.0, 18.0, 90), 'C2': (16.0, 17.0, 90), 'C3': (25.3, 16.0, 90),
+    'U1': (30.0, 14.0, 90), 'U2': (48.5, 14.5, 0), 'U3': (12.0, 23.5, 0),
+    # clock: Y1 (DIP-8 can or SMD inside it, top-left) -> R1 -> JP1 -> U1 CLKIN (pin 17, top row)
+    'Y1': (12.0, 14.0, 0), 'C10': (3.0, 12.0, 90), 'R1': (20.6, 7.4, 0), 'JP1': (24.8, 7.4, 0),
+    # LDO (below Y1) in/out, AVDD (pin 1, bottom-left), DVDD (pin 20, top-left), CAP (pin 18)
+    'C1': (8.0, 23.5, 90), 'C15': (12.0, 27.6, 0), 'C2': (16.0, 23.5, 90), 'C3': (25.3, 16.0, 90),
     'C4': (25.3, 12.0, 90), 'C5': (23.6, 12.0, 90), 'C6': (28.4, 8.4, 90),
     # DAC
     'FB1': (45.2, 9.0, 0), 'C7': (47.2, 11.4, 0), 'C8': (51.5, 10.8, 0), 'C9': (53.2, 13.5, 90),
     'R2': (44.0, 18.5, 90), 'JP2': (44.0, 21.5, 0),
     'R3': (39.0, 8.5, 90), 'R4': (40.6, 8.5, 90), 'R5': (42.2, 8.5, 90),
+    # MCU / cable header, right-hand short edge between the corner holes (pin 1 top-left)
+    'J3': (60.0, 15.0 - 2.5 * 2.54, 0),
 }
 for ch in range(4):                       # input filters between U1 inputs and J2
     x = 25.6 + 3.3 * ch
@@ -75,11 +77,7 @@ def j1_targets():
 
 
 def j2_targets():
-    t = {}
-    for n in range(1, 13):
-        k = (n - 1) // 2
-        t[str(n)] = (J2_1[0] - 2.54 * k, J2_1[1] if n % 2 else J2_1[1] + 2.54)
-    return t
+    return {str(n): (J2_1[0] + 2.54 * (n - 1), J2_1[1]) for n in range(1, 13)}
 
 
 def build(netfile):

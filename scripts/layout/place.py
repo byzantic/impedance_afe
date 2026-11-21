@@ -210,8 +210,9 @@ put('U26', 165.5, 22.0, 0); put('C8', 164.5, 26.5, 0); put('C9', 164.5, 30.0, 0)
 put('FB4', 164.0, 34.0, 0); put('C11', 171.0, 39.5, 0)
 put('R47', 160.8, 57.0, 90)               # GP21 clock series R (pad 2 near A1 pin 27)
 HAT = (W - 31.5, 17.0)                    # main-board position of the HAT's top-left corner after rotation (x, y)
-for ch in range(4):                       # ADC dividers, one row per channel left of J17 (signal row faces them)
-    y = HAT[1] + 28.0 + 4.5 * ch          # source -R(4.02k)- node -C- , -R(1k)- GND
+J2X0 = 32.5 - 5.5 * 2.54                  # HAT J2 (1x12) pin 1, HAT coords (X along the long edge); row at Y = 27.5
+for ch in range(4):                       # ADC dividers, one row per channel, level with J17 pin 2ch+1 (ADCchP)
+    y = HAT[1] + J2X0 + 5.08 * ch         # source -R(4.02k)- node -C- , -R(1k)- GND
     put(f'R{50+2*ch}', HAT[0] - 35.5, y, 0); put(f'C{50+ch}', HAT[0] - 22.5, y, 0); put(f'R{51+2*ch}', HAT[0] - 15.0, y, 0)
 # HAT (Pi Zero pHAT, 65 x 30) rotated 90 CW: header along the right edge, analog link J17 facing the dividers.
 
@@ -222,7 +223,7 @@ def hat_xy(X, Y):
 
 
 put('J16', *hat_xy(8.37, 4.77), 0)       # PinHeader 2x20 (male): pin1 odd row, even pins outboard
-put('J17', *hat_xy(38.85, 25.23), 180)   # PinHeader 2x6 (male): pin1 at the DAC end
+put('J17', *hat_xy(J2X0, 27.5), 0)       # PinHeader 1x12 (male), one column; pin 1 = ADC0P (top)
 for i, (X, Y) in enumerate([(3.5, 3.5), (61.5, 3.5), (3.5, 26.5), (61.5, 26.5)]):
     put(f'H{10+i}', *hat_xy(X, Y))
 

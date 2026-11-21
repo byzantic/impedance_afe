@@ -33,7 +33,8 @@ dsn0, dsn, ses = (os.path.join(wd, n) for n in ('afe0.dsn', 'afe.dsn', 'afe.ses'
 b = pcbnew.LoadBoard(PCB)
 bb = b.GetBoardEdgesBoundingBox()        # (one LoadBoard per process: a second one misbehaves in KiCad 9)
 for z in list(b.Zones()):
-    b.Remove(z)
+    if not z.GetIsRuleArea():               # rule areas (keep-outs) go to the router; copper pours don't
+        b.Remove(z)
 tmp = os.path.join(wd, 'nozone.kicad_pcb')
 pcbnew.SaveBoard(tmp, b)
 assert pcbnew.ExportSpecctraDSN(pcbnew.LoadBoard(tmp), dsn0)
@@ -61,16 +62,18 @@ s = s[:i] + ar + s[i:]
 # keep-out frame inside the board edge: Freerouting would otherwise route closer than KiCad's copper-edge clearance
 x0, x1 = pcbnew.ToMM(bb.GetLeft()) * 1000, pcbnew.ToMM(bb.GetRight()) * 1000          # DSN: um, y up
 y0, y1 = -pcbnew.ToMM(bb.GetBottom()) * 1000, -pcbnew.ToMM(bb.GetTop()) * 1000
-e = 650
+e, k = 650, 1600
 ko = ''.join(f'    (keepout "" (rect {lay} {a} {b} {c} {d}))\n' for lay in ('F.Cu', 'B.Cu') for a, b, c, d in
-             [(x0, y0, x0 + e, y1), (x1 - e, y0, x1, y1), (x0, y0, x1, y0 + e), (x0, y1 - e, x1, y1)])
+             [(x0, y0, x0 + e, y1), (x1 - e, y0, x1, y1), (x0, y0, x1, y0 + e), (x0, y1 - e, x1, y1)] +
+             # rounded corners (radius <= 3 mm): square keep-outs so tracks can't cut across the arcs
+             [(x0, y0, x0 + k, y0 + k), (x1 - k, y0, x1, y0 + k), (x0, y1 - k, x0 + k, y1), (x1 - k, y1 - k, x1, y1)])
 i = s.index('    (via ', s.index('  (structure'))
 open(dsn, 'w').write(s[:i] + ko + s[i:])
 
 # 4. route
 env = {k: v for k, v in os.environ.items() if k not in ('LD_LIBRARY_PATH', 'LD_PRELOAD')}
 log = open(os.path.join(wd, 'freerouting.log'), 'w')
-subprocess.run(['java', '-Djava.awt.headless=true', '-jar', JAR, '-de', dsn, '-do', ses,
+subprocess.run(['java', '-Xmx2g', '-Djava.awt.headless=true', '-jar', JAR, '-mt', '4', '-de', dsn, '-do', ses,
                 f'--router.autorouter.max_passes={passes}', '--gui.enabled=false'],
                cwd=wd, env=env, stdout=log, stderr=subprocess.STDOUT, check=True)
 for line in open(os.path.join(wd, 'freerouting.log')):

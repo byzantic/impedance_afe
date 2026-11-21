@@ -46,7 +46,7 @@ J13,1,SPI/AUX,SPI/AUX,SPI/AUX,IDC-Header_2x08_P2.54mm_Horizontal,"2x8 shrouded b
 J14,1,POT C-null,POT C-null,POT C-null,Molex_KK-254_AE-6410-04A_1x04_P2.54mm_Vertical,Molex 22-27-2041 (KK 254); 0.1in header also fits,,
 J15,1,POT G-null,POT G-null,POT G-null,Molex_KK-254_AE-6410-04A_1x04_P2.54mm_Vertical,Molex 22-27-2041 (KK 254); 0.1in header also fits,,
 J16,1,ADC/DAC HAT (Pi 40-pin),ADC/DAC HAT (Pi 40-pin),ADC/DAC HAT (Pi 40-pin),PinHeader_2x20_P2.54mm_Vertical,,,
-J17,1,ADC/DAC HAT analog,ADC/DAC HAT analog,ADC/DAC HAT analog,PinHeader_2x06_P2.54mm_Vertical,,,
+J17,1,ADC/DAC HAT analog,ADC/DAC HAT analog,ADC/DAC HAT analog,PinHeader_1x12_P2.54mm_Vertical,,,
 "JP1,JP2",2,50R_TERM,50R_TERM,50R_TERM,PinHeader_1x02_P2.54mm_Vertical,,,
 JP3,1,AC_GAIN x1/x0.1,AC_GAIN x1/x0.1,AC_GAIN x1/x0.1,PinHeader_1x03_P2.54mm_Vertical,,,
 JP5,1,PICO_GND_TIE,PICO_GND_TIE,PICO_GND_TIE,PinHeader_1x02_P2.54mm_Vertical,,,

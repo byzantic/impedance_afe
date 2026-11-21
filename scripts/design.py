@@ -223,9 +223,10 @@ PI = {1: '+3V3D', 17: '+3V3D', 2: '+5V', 4: '+5V', 19: 'MOSI', 21: 'MISO', 23: '
       7: 'HAT_CLK', 18: 'ADC_SYNC', 22: 'ADC_DRDY', **{n: 'GND' for n in (6, 9, 14, 20, 25, 30, 34, 39)}}
 P('J16', 'Connector_Generic:Conn_02x20_Odd_Even', 'ADC/DAC HAT (Pi 40-pin)', 'Connector_PinHeader_2.54mm:PinHeader_2x20_P2.54mm_Vertical',
   g(), {str(k): v for k, v in PI.items()}, note='Raspberry Pi pinout: SPI0, CE0 = ADC, CE1 = DAC, GPIO4 = clock, GPIO24 SYNC, GPIO25 DRDY')
-# signals on the even row (the row facing the dividers on the board), GND on the odd row
-P('J17', 'Connector_Generic:Conn_02x06_Odd_Even', 'ADC/DAC HAT analog', 'Connector_PinHeader_2.54mm:PinHeader_2x06_P2.54mm_Vertical', g(),
-  {'2': 'DAC_OUT', '4': 'DAC_REF', '6': 'ADC3P', '8': 'ADC2P', '10': 'ADC1P', '12': 'ADC0P', **{str(n): 'GND' for n in (1, 3, 5, 7, 9, 11)}})
+# single row matching the HAT's J2 (IN0P, IN0N .. IN3P, IN3N, GND, DAC_OUT, DAC_REF, GND); INnN tied to GND here
+P('J17', 'Connector_Generic:Conn_01x12', 'ADC/DAC HAT analog', 'Connector_PinHeader_2.54mm:PinHeader_1x12_P2.54mm_Vertical', g(),
+  {'1': 'ADC0P', '3': 'ADC1P', '5': 'ADC2P', '7': 'ADC3P', '10': 'DAC_OUT', '11': 'DAC_REF',
+   **{str(n): 'GND' for n in (2, 4, 6, 8, 9, 12)}})
 
 # ================================================================ CONTROLLER / DRIVERS  (x 290..830, y 370..580)
 T(290, 382, 'CONTROL: Pico 2 or ESP32-S3-ETH (socketed) -> SPI -> 2x 74HC595 (CTL0..15) -> 2x TBD62783A high-side drivers -> relay coils.|RLY_OE is pulled high (595 outputs off) until firmware enables them; the 4.7k pulls set the power-up state: ON = CTL3 (1M), CTL6 (DEV), CTL8 (RE_LOCAL).')
