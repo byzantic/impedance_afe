@@ -1,6 +1,6 @@
 # Impedance / C-V / DLTS / Electrochemistry Analog Front End: Rev B
 
-**Status:** the Rev B **schematic** is done; the **PCB** is placed with the critical nets pre-routed and locked, not yet autorouted. Rev A (schematic plus routed board, converted to KiCad 9/10) is kept in [`revA/`](revA/).
+**Status:** the Rev B **schematic** is done; the **PCB** is placed, the critical nets are hand-routed and locked, and the rest is autorouted (Freerouting): DRC 0 unconnected, 0 copper violations, parity 0; silkscreen not yet tidied. Rev A (schematic plus routed board, converted to KiCad 9/10) is kept in [`revA/`](revA/).
 
 Fabrication outputs go in [GitHub Releases](../../releases), not in the repo. The parts list with debug and precision columns is in [`docs/BOM_revB.csv`](docs/BOM_revB.csv).
 
@@ -117,7 +117,7 @@ The NE5534 can't be used: it needs compensation pins, which this footprint doesn
 
 **Rough cost per board** (from memory, not quoted): debug ≈ $110–190; precision adds ≈ $150–260 (8× OPA828 is about $65–95 of that). A batch of bare PCBs is about $40–80, plus the ADC/DAC HAT (all SMD, JLC-assembled; ADS131M04 + DAC80501 are most of its cost).
 
-## Layout (Rev B, first pass: placed + critical nets, not yet autorouted)
+## Layout (Rev B: placed, pre-routed, autorouted)
 - **Front edge (bottom):** CE, RE (shell = GUARD), GUARD, WE, I_LO, I_HI, V_OUT. I_LO and I_HI are swapped relative to the schematic order so that their lanes, and V_OUT's, run down to the BNCs to the right of the SUM_HI bus end, with no crossings of SUM_HI.
 - **Board:** 248 × 150 mm. Front BNC pitch 26.5 mm either side of RE (insulated GUARD-shell socket), 24 mm on the output group. GUARD (J6) stays left of K11, the left end of the SUM_HI bus, so the guard run never crosses the bus.
 - **Back edge (top):** J1 power, AC PROBE and BIAS/PULSE (24 mm pitch), the 74HC595s, controller (RJ45/USB end), SYNC_IN (~23 mm clear of the controller), J13 (back-right corner). Nuller pots on cables (J14/J15) to the front panel.
@@ -128,7 +128,8 @@ The NE5534 can't be used: it needs compensation pins, which this footprint doesn
 - **TIA ladder:** about 10–11 mm column pitch, ≥1.4 mm between parts, and a ~4 mm clear area between U5 −IN and R46 for an optional PTFE standoff. The SUM_HI guard is a GND pour with stitching vias and a mask-free band (a closed ring can't fit inside the combo footprint).
 - **HAT:** below J13 at the back-right, rotated 90°, on 11 mm M2.5 standoffs (H10–H13). Keep parts under it short. The ADC dividers sit in one row per channel to the left of J17.
 - **Mounting holes:** H1 (by J1, the star point) is the only chassis bond. H2–H9 are isolated M3 NPTH holes: front edge ×5 (H2, H7, H3, H4, H5), back edge ×1, centre ×2.
-- Combo footprints: same-numbered DIP and SOIC pads are joined with copper on every op-amp.
+- Combo footprints: same-numbered DIP and SOIC pads are joined with copper on every op-amp (followers also get the pin 2–6 link inside the package). The SOIC pads for pins 1, 5 and 8 are unnumbered (mechanical only): those pins are NC on every op-amp used here, so a part that uses them (offset trim, duals) would need the footprint changed.
+- Autorouting: GND is left to the pours (its pins are taken out of the router's netlist); everything else, including PICO_GND, is routed, with bottom-layer track cost ×3 to keep the bottom plane whole. The null-pot wipers (J14/J15 → U13/U14 +IN) and the op-amp decoupling links are pre-routed.
 - The L7805 dissipates about 1.5 W: fit a heatsink (keep-clear area on User.Comments).
 
 ## Verification status
@@ -153,5 +154,6 @@ The KiCad files are the source. `scripts/design.py` is the record of intent that
 kicad-cli sch export netlist -o afe.net impedance_afe.kicad_sch && python3 scripts/check_net.py afe.net
 (cd docs && PYTHONPATH=../scripts python3 ../scripts/make_bom.py)     # docs/BOM_revB.csv
 cd scripts/layout && /usr/bin/python3 place.py ../../afe.net && /usr/bin/python3 preroute.py && /usr/bin/python3 check.py
+FREEROUTING=/path/freerouting-2.5.0.jar /usr/bin/python3 autoroute.py 150 3.0   # run again (e.g. 80 2.0) to finish leftovers
 ```
-`place.py` and `preroute.py` rebuild the board from scratch, so they overwrite any placement or routing done by hand in KiCad.
+`place.py` and `preroute.py` rebuild the board from scratch, so they overwrite any placement or routing done by hand in KiCad. `preroute.py` must run on a freshly placed board. Freerouting doesn't always complete every connection; check with `check.py` and fix the last few by hand.

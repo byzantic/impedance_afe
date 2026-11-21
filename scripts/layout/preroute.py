@@ -1,6 +1,6 @@
 """Rev B: hand-route and lock the critical nets, add zones and the SUM_HI guard.  Run after place.py.
 
-Idempotent: removes all tracks, vias, zones and mask drawings, then rebuilds them.
+Run on a freshly placed board (place.py first): stripping an already pre-routed board segfaults in the KiCad 9 bindings.
 """
 import math
 import pcbnew
@@ -64,6 +64,14 @@ for u in OPAMPS:
     track(b, n7, L([(3.81, -1.27), (-0.635, -4.4)]), 0.3, BC)
     # pin 4 (-15V): around the outside of the SOIC row on F.Cu
     track(b, n4, L([(-3.81, 3.81), (-3.2, 5.45), (1.905, 5.45), (1.905, 2.475)]), 0.3)
+    # follower (out = -IN): bridge the pin-2 and pin-6 interior joins
+    if n2 == n6:
+        track(b, n2, L([(-0.635, -0.6), (0.635, 0.6)]), 0.25)
+    # book-ended decoupling (place.opamp side 'E'): C+ pin1 over the top row to pin 7, C- pin2 to the pin-4 join
+    cp, cn = place.DEC[u]
+    if close(pad_xy(b, cp, 1), xf(u, 2.5, -7.0)) and close(pad_xy(b, cn, 2), xf(u, -2.5, 7.0)):
+        track(b, n7, [pad_xy(b, cp, 1), xf(u, 5.3, -7.0), xf(u, 5.3, -1.27), xf(u, 3.81, -1.27)], 0.5)
+        track(b, n4, [pad_xy(b, cn, 2), xf(u, -3.2, 5.45)], 0.5)
 
 # ================================================================ SUM_HI: WE spine + bus
 we = pad_xy(b, 'J7', 1)
@@ -147,6 +155,14 @@ c16, k13, k14 = pad_xy(b, 'C16', 2), pad_xy(b, 'K13', 1), pad_xy(b, 'K14', 1)
 track(b, 'CALC_MID', [k14, k13], 0.25)
 track(b, 'CALC_MID', [c16, (k13[0], c16[1])], 0.25)
 
+
+# ================================================================ null-pot wipers: J14/J15 pin 2 -> U13/U14 +IN (DIP pin 3), under the op-amps
+j14, u13 = pad_xy(b, 'J14', 2), pad_xy(b, 'U13', 3, smd=False)
+yw = u13[1] + 2.8
+track(b, 'NC_WIP', [j14, (j14[0] - 1.74, j14[1] + 1.74), (j14[0] - 1.74, yw), (u13[0], yw), u13], 0.25)
+j15, u14 = pad_xy(b, 'J15', 2), pad_xy(b, 'U14', 3, smd=False)
+xr = u14[0] + 7.93
+track(b, 'NG_WIP', [j15, (j15[0], j15[1] + 4.5), (xr, j15[1] + 4.5), (xr, yw), (u14[0], yw), u14], 0.25)
 
 # ================================================================ zones
 def zone(net, layer, pts, prio=0, clearance=None, name=''):
