@@ -1,7 +1,7 @@
 """Rev B: autoroute the pre-routed board with Freerouting.  Run after place.py + preroute.py; running it again
 continues from the existing (unlocked) routing.
 
-    FREEROUTING=/path/freerouting-2.5.0.jar /usr/bin/python3 autoroute.py [passes] [B.Cu cost]
+    FREEROUTING=/path/freerouting-2.5.0.jar [PCB=other.kicad_pcb] /usr/bin/python3 autoroute.py [passes] [B.Cu cost]
 
 1. Export Specctra DSN from a zone-less copy (locked pre-routes go out as fixed wiring).
 2. Empty the pin list of GND: its pads stay as obstacles, the pours connect them (PICO_GND is routed too).
@@ -11,7 +11,8 @@ Work files go to $AUTOROUTE_DIR (default: a temp dir).
 """
 import os, re, subprocess, sys, tempfile
 import pcbnew
-from common import PCB, OX, OY, W, H
+from common import PCB
+PCB = os.path.abspath(os.environ.get('PCB', PCB))      # e.g. PCB=adc_hat/adc_hat.kicad_pcb
 
 def fill():
     """refill all zones in a fresh process (filling right after an SES import crashes the KiCad 9 bindings)"""
@@ -30,6 +31,7 @@ dsn0, dsn, ses = (os.path.join(wd, n) for n in ('afe0.dsn', 'afe.dsn', 'afe.ses'
 
 # 1. zone-less copy -> DSN
 b = pcbnew.LoadBoard(PCB)
+bb = b.GetBoardEdgesBoundingBox()        # (one LoadBoard per process: a second one misbehaves in KiCad 9)
 for z in list(b.Zones()):
     b.Remove(z)
 tmp = os.path.join(wd, 'nozone.kicad_pcb')
@@ -57,7 +59,8 @@ ar = f"""    (autoroute_settings
 i = s.index('    (boundary', s.index('  (structure'))
 s = s[:i] + ar + s[i:]
 # keep-out frame inside the board edge: Freerouting would otherwise route closer than KiCad's copper-edge clearance
-x0, y0, x1, y1 = OX * 1000, -(OY + H) * 1000, (OX + W) * 1000, -OY * 1000      # DSN: um, y up
+x0, x1 = pcbnew.ToMM(bb.GetLeft()) * 1000, pcbnew.ToMM(bb.GetRight()) * 1000          # DSN: um, y up
+y0, y1 = -pcbnew.ToMM(bb.GetBottom()) * 1000, -pcbnew.ToMM(bb.GetTop()) * 1000
 e = 650
 ko = ''.join(f'    (keepout "" (rect {lay} {a} {b} {c} {d}))\n' for lay in ('F.Cu', 'B.Cu') for a, b, c, d in
              [(x0, y0, x0 + e, y1), (x1 - e, y0, x1, y1), (x0, y0, x1, y0 + e), (x0, y1 - e, x1, y1)])

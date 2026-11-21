@@ -32,9 +32,10 @@ PL = {
 }
 for ch in range(4):                       # input filters between U1 inputs and J2
     x = 25.6 + 3.3 * ch
-    PL[f'R{10+2*ch}'] = (x, 22.0, 90)
-    PL[f'R{11+2*ch}'] = (x + 1.6, 22.0, 90)
-    PL[f'C{11+ch}'] = (x + 0.8, 19.4, 0)
+    flip = ch in (1, 3)                   # U1 pin order is N,P on channels 1 and 3: mirror so the pairs don't cross
+    PL[f'R{10+2*ch}'] = (x + 1.6 if flip else x, 22.0, 90)
+    PL[f'R{11+2*ch}'] = (x if flip else x + 1.6, 22.0, 90)
+    PL[f'C{11+ch}'] = (x + 0.8, 19.4, 180 if flip else 0)
 for i, (x, y) in enumerate(HOLES):
     PL[f'H{i+1}'] = (x, y, 0)
 
