@@ -85,11 +85,28 @@ assert pcbnew.ImportSpecctraSES(b, %r), 'SES import failed'
 stray = [t for t in b.GetTracks() if t.GetNetname().startswith('unconnected-')]   # router debris on NC pads
 for t in stray:
     b.Remove(t)
+def dangling(b):                                 # unlocked router vias reaching a single layer at most
+    out = []
+    for v in [t for t in b.GetTracks() if t.GetClass() == 'PCB_VIA' and not t.IsLocked()]:
+        lay = set()
+        for t in b.GetTracks():
+            if t.GetClass() == 'PCB_TRACK' and t.GetNetCode() == v.GetNetCode() and v.GetPosition() in (t.GetStart(), t.GetEnd()):
+                lay.add(t.GetLayer())
+        for p in b.GetPads():
+            if p.GetNetCode() == v.GetNetCode() and p.HitTest(v.GetPosition()):
+                lay |= {pcbnew.F_Cu, pcbnew.B_Cu} if p.GetAttribute() == pcbnew.PAD_ATTRIB_PTH else {p.GetLayer()}
+        if len(lay) < 2 and v.GetNetname() != 'GND':
+            out.append(v)
+    return out
+dv = dangling(b)
+for v in dv:
+    b.Remove(v)
 thin = [t for t in b.GetTracks() if t.GetClass() == 'PCB_TRACK' and t.GetWidth() < pcbnew.FromMM(0.15)]
 for t in thin:                                   # Freerouting neck-downs (0.125 mm) at pads -> JLC minimum
     t.SetWidth(pcbnew.FromMM(0.15))
 pcbnew.SaveBoard(%r, b)
-print('removed', len(stray), 'stray tracks on no-connect nets; widened', len(thin), 'neck-downs to 0.15 mm')
+print('removed', len(stray), 'stray tracks on no-connect nets and', len(dv), 'dangling vias; widened', len(thin),
+      'neck-downs to 0.15 mm')
 """ % (PCB, ses, PCB)
 # a second LoadBoard in one process hands back an unwrapped SWIG pointer (KiCad 9), so import in a fresh process
 r = subprocess.run([sys.executable, '-c', POST], capture_output=True, text=True, check=True)

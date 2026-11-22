@@ -21,7 +21,7 @@ os.makedirs(out, exist_ok=True)
 spec = importlib.util.spec_from_file_location('hd', os.path.join(HATDIR, 'design.py'))
 hd = importlib.util.module_from_spec(spec); spec.loader.exec_module(hd)
 parts = [p for p in hd.parts if not p['ref'].startswith(('H', 'JP'))]
-ROT_FIX = {'U1': -90, 'U2': -90, 'U3': 180}      # TSSOP-20, VSSOP-10, SOT-23-5
+ROT_FIX = {'U1': -90, 'U2': -90, 'U3': 180}      # TSSOP-20, WSON-10 (DRX), SOT-23-5
 nofit = {p['ref'] for p in parts if p['dnp'] or p['ref'].startswith('J')}
 
 

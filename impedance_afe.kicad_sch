@@ -33957,7 +33957,7 @@
       (width 0)
       (type default))
     (uuid "1c1530e5-5240-401e-9edf-b540e9120d02"))
-  (text "J16: ADC/DAC sub-board (adc_hat/, Pi Zero pHAT outline). SPI0 = 19/21/23, CE0 24 = CS_ADC, CE1 26 = CS_DAC,\nGPIO4 (7, GPCLK0) = HAT_CLK from Pico GP21 via R47, GPIO24 (18) = ADC_SYNC, GPIO25 (22) = ADC_DRDY.\nJ17: analog link to the sub-board, 1x12: ADC0P,GND, ADC1P,GND, ADC2P,GND, ADC3P,GND, GND, DAC_OUT, DAC_REF, GND (ADCn N tied to GND here)."
+  (text "J16: ADC/DAC sub-board (adc_hat/, Pi Zero pHAT outline). SPI0 = 19/21/23, CE0 24 = CS_ADC, CE1 26 = CS_DAC,\nGPIO4 (7, GPCLK0) = HAT_CLK from Pico GP21 via R47, GPIO24 (18) = ADC_SYNC, GPIO25 (22) = ADC_DRDY.\nJ17: analog link to the sub-board, 1x12: ADC0P,GND, ADC1P,GND, ADC2P,GND, ADC3P,GND, NC (HAT DAC_OUTB), DAC_OUT, DAC_REF, GND (ADCn N tied to GND here)."
     (exclude_from_sim no)
     (at 129.54 525.78 0)
     (effects
@@ -37452,38 +37452,6 @@
     (uuid "d10c713a-40e9-4886-b064-2a03f73e2200"))
   (wire
     (pts
-      (xy 146.05 487.68)
-      (xy 140.97 487.68))
-    (stroke
-      (width 0)
-      (type default))
-    (uuid "f95d3499-173c-496a-8cc7-9fa583309071"))
-  (wire
-    (pts
-      (xy 140.97 487.68)
-      (xy 130.81 487.68))
-    (stroke
-      (width 0)
-      (type default))
-    (uuid "b08ff109-d75d-42df-9d15-ec05635b178a"))
-  (wire
-    (pts
-      (xy 146.05 490.22)
-      (xy 140.97 490.22))
-    (stroke
-      (width 0)
-      (type default))
-    (uuid "5a98756a-4730-4748-8f3a-f7e6a0ee68db"))
-  (wire
-    (pts
-      (xy 140.97 490.22)
-      (xy 140.97 487.68))
-    (stroke
-      (width 0)
-      (type default))
-    (uuid "2f99216a-6c38-4054-accc-4e8b2aefc381"))
-  (wire
-    (pts
       (xy 146.05 492.76)
       (xy 143.51 492.76))
     (stroke
@@ -37506,11 +37474,17 @@
       (width 0)
       (type default))
     (uuid "e8d963ac-27a0-44ca-8262-2691650b23eb"))
-  (junction
-    (at 140.97 487.68)
-    (diameter 0)
-    (color 0 0 0 0)
-    (uuid "a0f7628e-e9a2-4213-ba73-37fc4d1153b0"))
+  (wire
+    (pts
+      (xy 146.05 487.68)
+      (xy 130.81 487.68))
+    (stroke
+      (width 0)
+      (type default))
+    (uuid "5e593f03-327b-4ba1-bfd3-e4e335479d16"))
+  (no_connect
+    (at 146.05 490.22)
+    (uuid "db0671e2-60bb-440c-881b-1367a5f59ba1"))
   (sheet_instances
     (path "/"
       (page "1")))

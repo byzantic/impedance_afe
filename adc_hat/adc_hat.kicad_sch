@@ -5,7 +5,7 @@
   (uuid "707a69cd-7d23-4128-a09f-32b377dc9595")
   (paper "A4")
   (title_block
-    (title "ADC/DAC HAT: ADS131M04 + DAC80501 (Pi Zero pHAT)")
+    (title "ADC/DAC HAT: ADS131M04 + DAC80502 (Pi Zero pHAT)")
     (date "2026-11-19")
     (rev "A")
     (comment 1 "Plugs onto the impedance AFE (J16/J17) or stacks on a Raspberry Pi Zero")
@@ -274,163 +274,6 @@
               (font
                 (size 1.27 1.27))))
           (number "11"
-            (effects
-              (font
-                (size 1.27 1.27))))))
-      (embedded_fonts no))
-    (symbol "afe:DAC80501_DGS"
-      (pin_names
-        (offset 1.016))
-      (exclude_from_sim no)
-      (in_bom yes)
-      (on_board yes)
-      (property "Reference" "U"
-        (at -10.16 8.89 0)
-        (effects
-          (font
-            (size 1.27 1.27))
-          (justify left)))
-      (property "Value" "DAC80501M"
-        (at -10.16 -8.89 0)
-        (effects
-          (font
-            (size 1.27 1.27))
-          (justify left)))
-      (property "Footprint" "Package_SO:VSSOP-10_3x3mm_P0.5mm"
-        (at 0 0 0)
-        (effects
-          (font
-            (size 1.27 1.27))
-          (hide yes)))
-      (property "Datasheet" ""
-        (at 0 0 0)
-        (effects
-          (font
-            (size 1.27 1.27))
-          (hide yes)))
-      (property "Description" "TI DAC80501M 16-bit DAC, 2.5 V internal ref, midscale power-on, VSSOP-10"
-        (at 0 0 0)
-        (effects
-          (font
-            (size 1.27 1.27))
-          (hide yes)))
-      (symbol "DAC80501_DGS_0_1"
-        (rectangle
-          (start -10.16 6.35)
-          (end 10.16 -6.35)
-          (stroke
-            (width 0.254)
-            (type default))
-          (fill
-            (type background))))
-      (symbol "DAC80501_DGS_1_1"
-        (pin power_in line
-          (at -12.7 5.08 0)
-          (length 2.54)
-          (name "VDD"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number "1"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin power_in line
-          (at -12.7 2.54 0)
-          (length 2.54)
-          (name "AGND"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number "4"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin input line
-          (at -12.7 0 0)
-          (length 2.54)
-          (name "SPI2C"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number "5"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin no_connect line
-          (at -12.7 -2.54 0)
-          (length 2.54)
-          (name "NC"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number "3"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin no_connect line
-          (at -12.7 -5.08 0)
-          (length 2.54)
-          (name "NC"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number "9"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin output line
-          (at 12.7 5.08 180)
-          (length 2.54)
-          (name "VOUT"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number "2"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin passive line
-          (at 12.7 2.54 180)
-          (length 2.54)
-          (name "VREFIO"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number "10"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin input line
-          (at 12.7 0 180)
-          (length 2.54)
-          (name "SCLK/SCL"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number "6"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin input line
-          (at 12.7 -2.54 180)
-          (length 2.54)
-          (name "~{SYNC}/A0"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number "7"
-            (effects
-              (font
-                (size 1.27 1.27)))))
-        (pin bidirectional line
-          (at 12.7 -5.08 180)
-          (length 2.54)
-          (name "SDIN/SDA"
-            (effects
-              (font
-                (size 1.27 1.27))))
-          (number "8"
             (effects
               (font
                 (size 1.27 1.27))))))
@@ -3008,7 +2851,159 @@
             (effects
               (font
                 (size 1.27 1.27))))))
-      (embedded_fonts no)))
+      (embedded_fonts no))
+    (symbol "afe:DAC80502_DRX"
+      (pin_names
+        (offset 1.016))
+      (in_bom yes)
+      (on_board yes)
+      (property "Reference" "U"
+        (at -10.16 8.89 0)
+        (effects
+          (font
+            (size 1.27 1.27))
+          (justify left)))
+      (property "Value" "DAC80502"
+        (at -10.16 -8.89 0)
+        (effects
+          (font
+            (size 1.27 1.27))
+          (justify left)))
+      (property "Footprint" "Package_SON:Texas_DRX_WSON-10_2.5x2.5mm_P0.5mm"
+        (at 0 0 0)
+        (effects
+          (font
+            (size 1.27 1.27)) hide))
+      (property "Datasheet" ""
+        (at 0 0 0)
+        (effects
+          (font
+            (size 1.27 1.27)) hide))
+      (property "Description" "TI DAC80502 dual 16-bit DAC, 2.5 V internal ref, RSTSEL power-on scale, WSON-10 2.5x2.5 (DRX)"
+        (at 0 0 0)
+        (effects
+          (font
+            (size 1.27 1.27)) hide))
+      (symbol "DAC80502_DRX_0_1"
+        (rectangle
+          (start -10.16 6.35)
+          (end 10.16 -6.35)
+          (stroke
+            (width 0.254)
+            (type default))
+          (fill
+            (type background))))
+      (symbol "DAC80502_DRX_1_1"
+        (pin power_in line
+          (at -12.7 5.08 0)
+          (length 2.54)
+          (name "VDD"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "1"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin power_in line
+          (at -12.7 2.54 0)
+          (length 2.54)
+          (name "AGND"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "4"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin input line
+          (at -12.7 0.0 0)
+          (length 2.54)
+          (name "SPI2C"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "5"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin input line
+          (at -12.7 -2.54 0)
+          (length 2.54)
+          (name "RSTSEL"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "3"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin output line
+          (at -12.7 -5.08 0)
+          (length 2.54)
+          (name "VOUTB"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "9"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin output line
+          (at 12.7 5.08 180)
+          (length 2.54)
+          (name "VOUTA"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "2"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin passive line
+          (at 12.7 2.54 180)
+          (length 2.54)
+          (name "VREFIO"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "10"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin input line
+          (at 12.7 0.0 180)
+          (length 2.54)
+          (name "SCLK/SCL"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "6"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin input line
+          (at 12.7 -2.54 180)
+          (length 2.54)
+          (name "~{SYNC}/A0"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "7"
+            (effects
+              (font
+                (size 1.27 1.27)))))
+        (pin bidirectional line
+          (at 12.7 -5.08 180)
+          (length 2.54)
+          (name "SDIN/SDA"
+            (effects
+              (font
+                (size 1.27 1.27))))
+          (number "8"
+            (effects
+              (font
+                (size 1.27 1.27))))))))
   (symbol
     (lib_id "Connector_Generic:Conn_02x20_Odd_Even")
     (at 40.64 76.2 0)
@@ -4710,7 +4705,7 @@
           (reference "JP1")
           (unit 1)))))
   (symbol
-    (lib_id "afe:DAC80501_DGS")
+    (lib_id "afe:DAC80502_DRX")
     (at 152.4 137.16 0)
     (unit 1)
     (exclude_from_sim no)
@@ -4723,12 +4718,12 @@
       (effects
         (font
           (size 1.27 1.27))))
-    (property "Value" "DAC80501MDGS"
+    (property "Value" "DAC80502DRX"
       (at 152.4 129.54 0)
       (effects
         (font
           (size 1.27 1.27))))
-    (property "Footprint" "Package_SO:VSSOP-10_3x3mm_P0.5mm"
+    (property "Footprint" "Package_SON:Texas_DRX_WSON-10_2.5x2.5mm_P0.5mm"
       (at 152.4 137.16 0)
       (effects
         (font
@@ -4740,19 +4735,19 @@
         (font
           (size 1.27 1.27))
         (hide yes)))
-    (property "Description" ""
+    (property "Description" "Dual 16-bit DAC, internal 2.5 V reference"
       (at 152.4 137.16 0)
       (effects
         (font
           (size 1.27 1.27))
         (hide yes)))
-    (property "MPN" "DAC80501MDGSR"
+    (property "MPN" "DAC80502DRXR"
       (at 152.4 137.16 0)
       (effects
         (font
           (size 1.27 1.27))
         (hide yes)))
-    (property "LCSC" "C1852032"
+    (property "LCSC" "C1880990"
       (at 152.4 137.16 0)
       (effects
         (font
@@ -5031,17 +5026,17 @@
     (dnp no)
     (uuid "a13ec807-8692-4263-8ef9-9570e9ee848b")
     (property "Reference" "R2"
-      (at 129.54 139.7 0)
+      (at 124.46 139.7 0)
       (effects
         (font
           (size 1.27 1.27))
-        (justify left)))
+        (justify right)))
     (property "Value" "10k"
-      (at 129.54 142.24 0)
+      (at 124.46 142.24 0)
       (effects
         (font
           (size 1.27 1.27))
-        (justify left)))
+        (justify right)))
     (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
       (at 127 140.97 0)
       (effects
@@ -6159,7 +6154,7 @@
         (size 1.27 1.27))
       (justify left bottom))
     (uuid "2a106191-8162-4a25-b7a8-3771e67d605d"))
-  (text "J2 = analog, 1x12: IN0P,IN0N .. IN3P,IN3N, GND, DAC_OUT, DAC_REF, GND.\nAFE: socket on the bottom (main board ties INnN to GND); general use: 2.54 mm screw terminals."
+  (text "J2 = analog, 1x12: IN0P,IN0N .. IN3P,IN3N, DAC_OUTB, DAC_OUT (A), DAC_REF, GND.\nAFE: socket on the bottom (main board ties INnN to GND); general use: 2.54 mm screw terminals."
     (exclude_from_sim no)
     (at 22.86 163.83 0)
     (effects
@@ -6766,9 +6761,6 @@
         (size 1.27 1.27))
       (justify left bottom))
     (uuid "8f6a1b0b-072d-40f9-82d6-e9736207357d"))
-  (no_connect
-    (at 139.7 139.7)
-    (uuid "36128b4f-1918-43ba-8cc4-47541be3b7bf"))
   (symbol
     (lib_id "power:GND")
     (at 137.16 134.62 270)
@@ -6840,9 +6832,6 @@
         (size 1.27 1.27))
       (justify left bottom))
     (uuid "4f6abbfb-e519-4282-a434-450b848804ce"))
-  (no_connect
-    (at 139.7 142.24)
-    (uuid "4cfa87f5-d634-4b48-8177-530b29fa0cc1"))
   (label "DAC_REF"
     (at 167.64 134.62 0)
     (fields_autoplaced yes)
@@ -8306,7 +8295,7 @@
         (path "/707a69cd-7d23-4128-a09f-32b377dc9595"
           (reference "#PWR0052")
           (unit 1)))))
-  (text "Decoupling: C15/C1 LDO in (+5V), C2/C3 AVDD, C4/C5 DVDD, C6 CAP, C7/C8 DAC VDD, C9 VREFIO, C10 Y1"
+  (text "Decoupling: C15/C1 LDO in (+5V), C2/C3 AVDD, C4/C5 DVDD, C6 CAP, C7/C8 DAC VDD; R6 RSTSEL pull-up (midscale at power-on), C9 VREFIO, C10 Y1"
     (exclude_from_sim no)
     (at 20.32 170.18 0)
     (effects
@@ -9994,52 +9983,6 @@
         (size 1.27 1.27))
       (justify left bottom))
     (uuid "2352ca1c-9274-468b-bf20-5a08a3fa0b79"))
-  (symbol
-    (lib_id "power:GND")
-    (at 33.02 149.86 270)
-    (unit 1)
-    (exclude_from_sim no)
-    (in_bom yes)
-    (on_board yes)
-    (dnp no)
-    (fields_autoplaced yes)
-    (uuid "49e2e3d8-6679-40e9-9803-ea588c2eab01")
-    (property "Reference" "#PWR0067"
-      (at 33.02 149.86 0)
-      (effects
-        (font
-          (size 1.27 1.27))
-        (hide yes)))
-    (property "Value" "GND"
-      (at 27.94 149.86 0)
-      (effects
-        (font
-          (size 1.27 1.27))))
-    (property "Footprint" ""
-      (at 33.02 149.86 0)
-      (effects
-        (font
-          (size 1.27 1.27))
-        (hide yes)))
-    (property "Datasheet" ""
-      (at 33.02 149.86 0)
-      (effects
-        (font
-          (size 1.27 1.27))
-        (hide yes)))
-    (property "Description" ""
-      (at 33.02 149.86 0)
-      (effects
-        (font
-          (size 1.27 1.27))
-        (hide yes)))
-    (pin "1"
-      (uuid "b5643aab-e557-4313-a665-e2da875c474a"))
-    (instances
-      (project "adc_hat"
-        (path "/707a69cd-7d23-4128-a09f-32b377dc9595"
-          (reference "#PWR0067")
-          (unit 1)))))
   (label "CS_DAC"
     (at 152.4 50.8 180)
     (fields_autoplaced yes)
@@ -10334,6 +10277,182 @@
         (size 1.27 1.27))
       (justify left bottom))
     (uuid "ed80ba76-9412-4be8-a397-aa9347dca557"))
+  (wire
+    (pts
+      (xy 139.7 139.7)
+      (xy 137.16 139.7))
+    (stroke
+      (width 0)
+      (type default))
+    (uuid "f8e96e04-885e-4789-91ed-2860fe0539e6"))
+  (label "RSTSEL"
+    (at 137.16 139.7 180)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1.27 1.27))
+      (justify right bottom))
+    (uuid "123b3ae0-957d-42eb-9f50-a132a3c164b6"))
+  (symbol
+    (lib_id "Device:R")
+    (at 185.42 152.4 90)
+    (unit 1)
+    (exclude_from_sim no)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (uuid "68ebc3a8-6d10-4cc6-8679-0ea47aa641df")
+    (property "Reference" "R6"
+      (at 185.42 149.86 270)
+      (effects
+        (font
+          (size 1.27 1.27))))
+    (property "Value" "10k"
+      (at 185.42 154.94 270)
+      (effects
+        (font
+          (size 1.27 1.27))))
+    (property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+      (at 185.42 152.4 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (hide yes)))
+    (property "Datasheet" ""
+      (at 185.42 152.4 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (hide yes)))
+    (property "Description" ""
+      (at 185.42 152.4 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (hide yes)))
+    (property "LCSC" "C25804"
+      (at 185.42 152.4 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (hide yes)))
+    (property "Note" "RSTSEL high = midscale at power-up; to GND for zero scale"
+      (at 185.42 152.4 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (hide yes)))
+    (pin "1"
+      (uuid "b617c29f-ef96-4049-bf65-2fd163013b88"))
+    (pin "2"
+      (uuid "7f8e0e5b-06a9-4dbb-ac01-0b42eeb129cf"))
+    (instances
+      (project "adc_hat"
+        (path "/707a69cd-7d23-4128-a09f-32b377dc9595"
+          (reference "R6")
+          (unit 1)))))
+  (wire
+    (pts
+      (xy 181.61 152.4)
+      (xy 179.07 152.4))
+    (stroke
+      (width 0)
+      (type default))
+    (uuid "261fd597-4439-4fb7-8f64-030222e0e6ad"))
+  (label "RSTSEL"
+    (at 179.07 152.4 180)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1.27 1.27))
+      (justify right bottom))
+    (uuid "619086a4-2199-4c7e-ac53-d5432072c694"))
+  (wire
+    (pts
+      (xy 189.23 152.4)
+      (xy 191.77 152.4))
+    (stroke
+      (width 0)
+      (type default))
+    (uuid "32acd750-ea3f-4fd6-bcf5-e82c71867443"))
+  (symbol
+    (lib_id "power:+5V")
+    (at 191.77 152.4 0)
+    (unit 1)
+    (exclude_from_sim no)
+    (in_bom yes)
+    (on_board yes)
+    (dnp no)
+    (fields_autoplaced yes)
+    (uuid "8f5bbd3d-c51f-4c61-ad62-f26a5a25bb93")
+    (property "Reference" "#PWR0069"
+      (at 191.77 152.4 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (hide yes)))
+    (property "Value" "+5VA"
+      (at 191.77 148.59 0)
+      (effects
+        (font
+          (size 1.27 1.27))))
+    (property "Footprint" ""
+      (at 191.77 152.4 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (hide yes)))
+    (property "Datasheet" ""
+      (at 191.77 152.4 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (hide yes)))
+    (property "Description" ""
+      (at 191.77 152.4 0)
+      (effects
+        (font
+          (size 1.27 1.27))
+        (hide yes)))
+    (pin "1"
+      (uuid "210debd2-2d5d-4b70-a04d-d01f66a3f98d"))
+    (instances
+      (project "adc_hat"
+        (path "/707a69cd-7d23-4128-a09f-32b377dc9595"
+          (reference "#PWR0069")
+          (unit 1)))))
+  (wire
+    (pts
+      (xy 139.7 142.24)
+      (xy 137.16 142.24))
+    (stroke
+      (width 0)
+      (type default))
+    (uuid "02ab1d20-d84c-4152-ac8d-0d09ccfc4757"))
+  (wire
+    (pts
+      (xy 137.16 142.24)
+      (xy 137.16 147.32))
+    (stroke
+      (width 0)
+      (type default))
+    (uuid "0e8d162d-af67-4816-9874-59f3a0235f2b"))
+  (label "DAC_OUTB"
+    (at 137.16 147.32 270)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1.27 1.27))
+      (justify right bottom))
+    (uuid "78e5cf13-88f6-4b5e-9e6c-b682d6f2964a"))
+  (label "DAC_OUTB"
+    (at 33.02 149.86 0)
+    (fields_autoplaced yes)
+    (effects
+      (font
+        (size 1.27 1.27))
+      (justify left bottom))
+    (uuid "38147faa-7564-4b5a-ad15-be370ab40161"))
   (sheet_instances
     (path "/"
       (page "1")))

@@ -3,7 +3,9 @@
     FREEROUTING=/path/freerouting-2.5.0.jar /usr/bin/python3 scripts/hat/route.py [passes]
 
 Run on the board as placed by scripts/hat/place.py (it adds locked fan-out vias; re-running adds them again).
-1. Net class Power (0.4 mm) for the supply rails; copper joins between the DIP and SMD pads of the Y1 combo footprint.
+1. Net classes Power (0.4 mm) and Clock (0.3 mm); copper joins between the DIP and SMD pads of the Y1 combo footprint;
+   locked clock pre-routes: JP1 pin 2 -> U1 CLKIN (ADC_CLK, up and over C6) and R1 -> JP1 pin 3 (XO_CLK, under JP1);
+   locked escapes for the left-hand pins of U2 (WSON).
 2. GND fan-out: a locked via beside every SMD GND pad (collision-checked), so each pad reaches the bottom plane
    whatever the top-layer routing does to the top pour.
 3. scripts/layout/autoroute.py with PCB=this board (GND to the pours, everything else routed).
@@ -12,10 +14,13 @@ import math, os, subprocess, sys
 HATDIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HATDIR, '..', 'layout'))
 import pcbnew  # noqa: E402
-from common import mm, P, ROOT, via, track  # noqa: E402
+from common import mm, P, ROOT, via, track, GLOBAL  # noqa: E402
+GLOBAL.add('+5VA')                    # HAT-only rail (power symbol, no sheet prefix)
 
 PCB = os.path.join(ROOT, 'adc_hat', 'adc_hat.kicad_pcb')
 POWER = ['+5V', '+5VA', '+3V3', '+3V3A']
+CLOCK = ['CLK_IN', 'ADC_CLK', 'XO_CLK', 'XO_OUT']
+CW = 0.3                              # clock track width
 CL, VR, TW = 0.2, 0.3, 0.25           # clearance, via radius, fan-out track width (0.5 mm pitch on U2)
 
 
@@ -26,9 +31,41 @@ def prepare():
     nc = pcbnew.NETCLASS('Power')
     nc.SetTrackWidth(mm(0.4)); nc.SetClearance(mm(CL)); nc.SetViaDiameter(mm(0.6)); nc.SetViaDrill(mm(0.3))
     ns.SetNetclass('Power', nc)
+    nc = pcbnew.NETCLASS('Clock')
+    nc.SetTrackWidth(mm(CW)); nc.SetClearance(mm(CL)); nc.SetViaDiameter(mm(0.6)); nc.SetViaDrill(mm(0.3))
+    ns.SetNetclass('Clock', nc)
     ns.ClearNetclassPatternAssignments()
     for n in POWER:
         ns.SetNetclassPatternAssignment(n, 'Power')
+    for n in CLOCK:
+        ns.SetNetclassPatternAssignment('/' + n, 'Clock')       # local labels: /NAME
+
+    def pad(ref, n):
+        return P(b.FindFootprintByReference(ref).FindPadByNumber(n).GetPosition())
+    # clock pre-routes (locked): ADC_CLK leaves JP1 upwards, runs between the Pi header's inner row and JP1/C6, and
+    # drops straight onto U1 pin 17; XO_CLK runs under JP1 from R1 to JP1 pin 3.
+    j2, u17, r1, j3 = pad('JP1', '2'), pad('U1', '17'), pad('R1', '2'), pad('JP1', '3')
+    yt, yb = 6.1, 8.9
+    clk = [('ADC_CLK', [j2, (j2[0], yt), (u17[0], yt), u17]), ('XO_CLK', [r1, (r1[0], yb), (j3[0], yb), j3])]
+    for net, pts in clk:
+        track(b, net, pts, CW)
+    # U2 (WSON-10, 0.5 mm pitch, pins 1-5 down the left side): locked escapes at pad width, nested so nothing is boxed in.
+    # pin 1 VDD straight up to C7; pin 2 VOUTA out to the left (the router takes it on to J2); pin 3 RSTSEL left and
+    # down to R6; pin 4 GND to its own via; pin 5 SPI2C straight down to R2.
+    u = {n: pad('U2', str(n)) for n in range(1, 6)}
+    xo = u[1][0] - 0.74                        # outer pad ends
+    r6, r2 = pad('R6', '1'), pad('R2', '1')
+    esc = [('+5VA', [u[1], (u[1][0], pad('C7', '1')[1])]),
+           ('DAC_OUT', [u[2], (r6[0] - 1.1, u[2][1])]),
+           ('RSTSEL', [u[3], (r6[0], u[3][1]), r6]),
+           ('GND', [u[4], (xo - 0.37, u[4][1]), (xo - 0.37, u[4][1] + 1.0)]),
+           ('DAC_SPI2C', [u[5], (u[5][0] - 0.21, u[5][1]), (u[5][0] - 0.21, r2[1]), r2])]
+    for net, pts in esc:
+        track(b, net, pts, 0.25)
+    via(b, 'GND', *esc[3][1][-1])
+    via(b, 'DAC_OUT', *esc[1][1][-1])           # the router picks VOUTA up here, on either layer
+    csegs = [(a, c) for net, pts in clk + esc for a, c in zip(pts, pts[1:])]
+    prefanned = {('U2', '4')}
 
     # combo footprints (Y1: DIP-8 can + SMD inside): join same-numbered THT and SMD pads with copper
     joins = 0
@@ -70,11 +107,18 @@ def prepare():
     def segbox(a, c, bx, n=12):
         return min(boxd(a[0] + (c[0] - a[0]) * k / n, a[1] + (c[1] - a[1]) * k / n, bx) for k in range(n + 1))
 
-    vias = []
+    def segpt(a, c, q):
+        dx, dy = c[0] - a[0], c[1] - a[1]
+        t = max(0, min(1, ((q[0] - a[0]) * dx + (q[1] - a[1]) * dy) / (dx * dx + dy * dy or 1)))
+        return math.hypot(q[0] - a[0] - t * dx, q[1] - a[1] - t * dy)
+
+    vias = [esc[3][1][-1], esc[1][1][-1]]
     added = 0
     for (bx, net, p) in list(boxes):
         if net != 'GND' or p.GetAttribute() != pcbnew.PAD_ATTRIB_SMD:
             continue
+        if (p.GetParentFootprint().GetReference(), p.GetNumber()) in prefanned:
+            continue                     # escape + via drawn above
         if any(q.GetNetname() == 'GND' and q.GetAttribute() == pcbnew.PAD_ATTRIB_PTH for q in p.GetParentFootprint().Pads()):
             continue                     # joined to a through-hole GND pad of the same part (Y1 combo)
         c = P(p.GetPosition())
@@ -97,6 +141,9 @@ def prepare():
                          for ob, n2, q in boxes if n2 != 'GND')
                 ok = ok and all(math.hypot(v[0] - h[0], v[1] - h[1]) >= hr + 0.15 + 0.25 for h, hr in holes)
                 ok = ok and all(math.hypot(v[0] - w[0], v[1] - w[1]) >= 2 * VR + 0.3 for w in vias)
+                ok = ok and all(segpt(a2, c2, v) >= VR + CW / 2 + CL + 0.02 and
+                                min(segpt(a2, c2, (c[0] + (v[0] - c[0]) * k / 12, c[1] + (v[1] - c[1]) * k / 12))
+                                    for k in range(13)) >= TW / 2 + CW / 2 + CL + 0.02 for a2, c2 in csegs)
                 ok = ok and all(boxd(*v, ob) >= VR + 0.1 for ob, n2, q in boxes if n2 == 'GND' and q is not p)
                 if ok:
                     best = v
@@ -107,7 +154,7 @@ def prepare():
         via(b, 'GND', *best); track(b, 'GND', [c, best], TW)
         vias.append(best); added += 1
     pcbnew.SaveBoard(PCB, b)
-    print('Power class on', POWER, '| combo pad joins', joins, '| GND fan-out vias', added)
+    print('Power class on', POWER, '| Clock class on', CLOCK, '| combo pad joins', joins, '| GND fan-out vias', added)
 
 
 if __name__ == '__main__':

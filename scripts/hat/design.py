@@ -6,7 +6,8 @@ terminals on top. All SMD parts on top (JLC assembly); J1/J2/J3 and the optional
 
 ADS131M04: AVDD from its own LDO (U3, from 5 V), DVDD/IO = host 3V3. Clock: JP1 1-2 (default) = host GPIO4
 (GPCLK0 on a Pi, Pico GP21 on the main board), 2-3 = on-board 8.192 MHz oscillator Y1 (DNP by default).
-DAC80501: VDD = filtered 5 V (+5VA), internal reference; VREFIO and VOUT go to J2.
+DAC80502 (dual): VDD = filtered 5 V (+5VA), internal reference, RSTSEL pulled to VDD by R6 (midscale at power-on); VOUTA, VOUTB and
+VREFIO go to J2. SPI2C low = SPI (datasheet SBAS793A), the R2 default; JP2 bridged = I2C.
 """
 parts = []
 
@@ -35,12 +36,12 @@ PI = {1: '+3V3', 17: '+3V3', 2: '+5V', 4: '+5V', 19: 'MOSI', 21: 'MISO', 23: 'SC
       7: 'CLK_IN', 18: 'SYNC', 22: 'DRDY', **{n: 'GND' for n in (6, 9, 14, 20, 25, 30, 34, 39)}}
 P('J1', 'Connector_Generic:Conn_02x20_Odd_Even', 'Pi 40-pin', 'Connector_PinSocket_2.54mm:PinSocket_2x20_P2.54mm_Vertical',
   PI, mpn='2x20 female 2.54 mm, 8.5 mm (Pi HAT stacking height)', note='bottom side; ID_SD/ID_SC (27/28) unused')
-# single row along the bottom edge, pin 1 at the left (top view): channel pairs P,N, then GND, DAC_OUT, DAC_REF, GND
+# single row along the bottom edge, pin 1 at the left (top view): channel pairs P,N, then DAC_OUTB, DAC_OUT (A), DAC_REF, GND
 AN = {1: 'IN0P', 2: 'IN0N', 3: 'IN1P', 4: 'IN1N', 5: 'IN2P', 6: 'IN2N', 7: 'IN3P', 8: 'IN3N',
-      9: 'GND', 10: 'DAC_OUT', 11: 'DAC_REF', 12: 'GND'}
+      9: 'DAC_OUTB', 10: 'DAC_OUT', 11: 'DAC_REF', 12: 'GND'}
 P('J2', 'Connector_Generic:Conn_01x12', 'Analog', 'Connector_PinSocket_2.54mm:PinSocket_1x12_P2.54mm_Vertical',
   AN, mpn='1x12 female 2.54 mm, 8.5 mm (AFE) or 2.54 mm screw terminals (general use)',
-  note='AFE: socket on the bottom, mates main-board J17 (INnN tied to GND there); general use: screw terminals on top')
+  note='AFE: socket on the bottom, mates main-board J17 (INnN tied to GND there; its pin 9 is unconnected); general use: screw terminals on top')
 # MCU / cable header on the right-hand short edge (2x6, IDC-ribbon compatible)
 P('J3', 'Connector_Generic:Conn_02x06_Odd_Even', 'SPI', 'Connector_PinHeader_2.54mm:PinHeader_2x06_P2.54mm_Vertical',
   {1: '+5V', 2: 'GND', 3: '+3V3', 4: 'GND', 5: 'SCLK', 6: 'MOSI', 7: 'MISO', 8: 'CS_ADC', 9: 'CS_DAC', 10: 'DRDY',
@@ -74,16 +75,17 @@ P('JP1', 'Jumper:SolderJumper_3_Bridged12', 'CLK SRC', 'Jumper:SolderJumper-3_P1
   {1: 'CLK_IN', 2: 'ADC_CLK', 3: 'XO_CLK'}, note='1-2 (default) = host GPIO4; 2-3 = Y1')
 
 # DAC
-P('U2', 'afe:DAC80501_DGS', 'DAC80501MDGS', 'Package_SO:VSSOP-10_3x3mm_P0.5mm',
-  {1: '+5VA', 4: 'GND', 5: 'DAC_SPI2C', 2: 'DAC_OUT', 10: 'DAC_REF', 6: 'SCLK', 7: 'CS_DAC', 8: 'MOSI'},
-  mpn='DAC80501MDGSR', lcsc='C1852032')
+P('U2', 'afe:DAC80502_DRX', 'DAC80502DRX', 'Package_SON:Texas_DRX_WSON-10_2.5x2.5mm_P0.5mm',
+  {1: '+5VA', 4: 'GND', 5: 'DAC_SPI2C', 3: 'RSTSEL', 2: 'DAC_OUT', 9: 'DAC_OUTB', 10: 'DAC_REF', 6: 'SCLK', 7: 'CS_DAC',
+   8: 'MOSI'}, mpn='DAC80502DRXR', lcsc='C1880990', note='RSTSEL (3) high via R6: both outputs at midscale on power-up')
 P('FB1', 'Device:FerriteBead', '600R@100MHz', 'Inductor_SMD:L_0603_1608Metric', {1: '+5V', 2: '+5VA'},
   lcsc=LFB, note='DAC supply filter')
 C('C7', '100n', '+5VA', 'GND', lcsc=L100N, note='DAC VDD'); C('C8', '10u', '+5VA', 'GND', fp=C08, lcsc=L10U, note='DAC VDD')
 C('C9', '220n', 'DAC_REF', 'GND', lcsc=L220N, note='VREFIO (datasheet: 150 nF minimum)')
-R('R2', '10k', 'DAC_SPI2C', 'GND', lcsc=L10K, note='SPI2C default low')
+R('R2', '10k', 'DAC_SPI2C', 'GND', lcsc=L10K, note='SPI2C low = SPI')
 P('JP2', 'Jumper:SolderJumper_2_Open', 'SPI2C HI', 'Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm',
-  {1: 'DAC_SPI2C', 2: '+5VA'}, note='bridge to tie SPI2C high (open item: level for SPI mode)')
+  {1: 'DAC_SPI2C', 2: '+5VA'}, note='bridge for I2C mode (SPI2C high)')
+R('R6', '10k', 'RSTSEL', '+5VA', lcsc=L10K, note='RSTSEL high = midscale at power-up; to GND for zero scale')
 
 # host-absent defaults
 R('R3', '10k', 'CS_ADC', '+3V3', lcsc=L10K); R('R4', '10k', 'CS_DAC', '+3V3', lcsc=L10K); R('R5', '10k', 'SYNC', '+3V3', lcsc=L10K)

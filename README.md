@@ -26,7 +26,7 @@ Fabrication outputs go in [GitHub Releases](../../releases), not in the repo. Th
 | DUT drive | ±10 V, ≥ ±20 mA (op-amp limited), 47 Ω series to CE |
 | BIAS/PULSE input | DC-coupled, Z_in ≈ 9.1 kΩ (10 k to virtual ground ∥ 100 k). JP1 = 50 Ω termination |
 | AC PROBE input | AC-coupled. ×1: Z_in ≈ 9.1 kΩ, corner 16 Hz. ×0.1: Z_in ≈ 50 kΩ, corner 1.6 Hz. JP2 = 50 Ω termination, JP3 = gain |
-| Bias DAC | DAC80501M, 16-bit, +10.05 V … −10.05 V (≈0.31 mV/LSB), 0 V at midscale power-up; K21 connects it |
+| Bias DAC | DAC80502 channel A, 16-bit, +10.05 V … −10.05 V (≈0.31 mV/LSB), 0 V at midscale power-up; K21 connects it |
 | High-gain TIA (±5 V out) | 1k: ±5 mA · 10k: ±500 µA · 100k: ±50 µA · 1M: ±5 µA · 10M: ±500 nA · 100M: ±50 nA |
 | TIA feedback pole (precision Cf) | 1k: 7.2 MHz · 10k: 1.6 MHz · 100k: 720 kHz · 1M: 160 kHz · 10M/100M: set by strays (tens of kHz or less) |
 | 1 MHz C-V ranges | **1k and 10k only**; calibrate gain and phase per range with the cal loads |
@@ -34,20 +34,20 @@ Fabrication outputs go in [GitHub Releases](../../releases), not in the repo. Th
 | Null range | C: 0–100 pF, or 0–1.01 nF (NULL_RNG). G: ±50 µS, or ±505 µS (NULL_RNG) |
 | Outputs (BNC, 50 Ω back-terminated) | V_OUT (DC: V_RE/2 · AC: ×10.1 V_RE), I_HI, I_LO |
 | Other BNCs | CE, RE (shell = driven guard), GUARD, WE, BIAS/PULSE, AC PROBE, SYNC_IN (to controller pin 22, clamped) |
-| ADC / DAC | On the **ADC/DAC HAT** (`adc_hat/`, Pi Zero pHAT outline) plugged onto J16/J17. ADS131M04, ±1.2 V FS behind the main board's /5.02 dividers (±6 V at the outputs). CH0 V_DC, CH1 I_HI, CH2 I_LO, CH3 V_AC. Clock: Pico GP21 GPOUT0 at 8.000 MHz (USB PLL / 6; data rates ×0.977) via J16-7 by default, or the HAT's 8.192 MHz oscillator (HAT JP1). DAC80501 bias DAC also on the HAT |
+| ADC / DAC | On the **ADC/DAC HAT** (`adc_hat/`, Pi Zero pHAT outline) plugged onto J16/J17. ADS131M04, ±1.2 V FS behind the main board's /5.02 dividers (±6 V at the outputs). CH0 V_DC, CH1 I_HI, CH2 I_LO, CH3 V_AC. Clock: Pico GP21 GPOUT0 at 8.000 MHz (USB PLL / 6; data rates ×0.977) via J16-7 by default, or the HAT's 8.192 MHz oscillator (HAT JP1). DAC80502 dual DAC also on the HAT (A = bias, B spare on J2 pin 9) |
 
 ## Blocks (schematic sheet regions)
 | Block | Refs | Notes |
 |---|---|---|
 | Power | J1, D1–D3, FB1–FB5, U25, U26 | Controller VSYS fed via D3. Controller ground via FB5 (JP5 hard-ties it) |
 | Inputs / summer | J2, J3, U9, U10, K21 | VSET = V_bias + V_dac + k·V_ac (two inverting stages). J2/J3 are on the back edge |
-| Bias DAC | HAT U2, U11 | level shift on the main board: V = 10.05 V − 4.02·V_DAC. DAC_OUT/DAC_REF arrive on J17. SPI2C strap is on the HAT (R2 + JP2) |
+| Bias DAC | HAT U2, U11 | level shift on the main board: V = 10.05 V − 4.02·V_DAC. DAC_OUT/DAC_REF arrive on J17. SPI2C strap is on the HAT (R2 = SPI, JP2 = I2C); R6 pulls RSTSEL high (midscale at power-up) |
 | Control amp | U1, K7 (DEV), K8 (PSTAT) | DEV: follower. PSTAT: PI (C15 100 p, R15 1 k, R16 10 k): retune for your cells |
 | Cell / cal | K9 (RE_LOCAL), K10 (CELL), K11–K14, R18, C16 | cal mid-nodes are grounded by NC relays when off, so the open contacts see 0 V across them (no leakage into WE) |
 | RE / guard / monitors | U2, U3, U7, U4, U8, K19/K20 | U7 (RE_MON) feeds the monitors and the nuller, keeping their load off the electrometer U2 |
 | Nuller | U12–U14, RV1, RV2, J14, J15, K15–K18 | inject at SUM_HI. C path: −jωC·V. G path: AC-coupled, bipolar. RV1/RV2 are front-panel 10-turn pots on J14/J15 (Molex KK 254: 1 CW, 2 wiper, 3 CCW, 4 cable shield) |
 | TIAs | U5 (K1–K6, R41–R46, C41–C46), Q1/Q2, U6 | relays on the output side of the feedback networks |
-| ADC link | J16 (Pi 40-pin, male), J17 (1×12 analog, male), R47, R50–R57, C50–C53 | dividers + 10 nF (≈20 kHz) on the main board, one row per channel level with its J17 pin. J17: 1 ADC0P, 3 ADC1P, 5 ADC2P, 7 ADC3P, 10 DAC_OUT, 11 DAC_REF; 2/4/6/8/9/12 GND (ADCn N tied to GND here) |
+| ADC link | J16 (Pi 40-pin, male), J17 (1×12 analog, male), R47, R50–R57, C50–C53 | dividers + 10 nF (≈20 kHz) on the main board, one row per channel level with its J17 pin. J17: 1 ADC0P, 3 ADC1P, 5 ADC2P, 7 ADC3P, 10 DAC_OUT, 11 DAC_REF; 2/4/6/8/12 GND (ADCn N tied to GND here); 9 unconnected (HAT DAC_OUTB) |
 | Controller | A1 (Pico 2 or ESP32-S3-ETH), U27/U28 (74HC595), U22/U23, R76, J13 | 4.7 k pulls set the power-up state; RLY_OE (R76 pull-up) holds the 595 outputs off until firmware enables them |
 
 ## Control map
@@ -115,7 +115,7 @@ Each BOM line has a **debug** and a **precision** column.
 
 The NE5534 can't be used: it needs compensation pins, which this footprint doesn't wire.
 
-**Rough cost per board** (from memory, not quoted): debug ≈ $110–190; precision adds ≈ $150–260 (8× OPA828 is about $65–95 of that). A batch of bare PCBs is about $40–80, plus the ADC/DAC HAT (all SMD, JLC-assembled; ADS131M04 + DAC80501 are most of its cost).
+**Rough cost per board** (from memory, not quoted): debug ≈ $110–190; precision adds ≈ $150–260 (8× OPA828 is about $65–95 of that). A batch of bare PCBs is about $40–80, plus the ADC/DAC HAT (all SMD, JLC-assembled; ADS131M04 + DAC80502 are most of its cost).
 
 ## Layout (Rev B: placed, pre-routed, autorouted)
 - **Front edge (bottom):** CE, RE (shell = GUARD), GUARD, WE, I_LO, I_HI, V_OUT. I_LO and I_HI are swapped relative to the schematic order so that their lanes, and V_OUT's, run down to the BNCs to the right of the SUM_HI bus end, with no crossings of SUM_HI.
@@ -126,7 +126,7 @@ The NE5534 can't be used: it needs compensation pins, which this footprint doesn
 - **Op-amp decoupling** book-ends each socket: C+ at the pin-7 end, C− at the pin-4 end. U2, U5 and U6 (RE input and the two TIAs) keep hand-placed caps.
 - **Nuller:** U12 sits between the null buffers U13/U14, with J14/J15 either side of it. A Bourns 3296W multi-turn trimmer fits J14/J15 pads 1–3 (in-line, 2.54 mm, wiper in the middle) for a permanent fixture; check the CW sense against the panel-pot wiring.
 - **TIA ladder:** about 10–11 mm column pitch, ≥1.4 mm between parts, and a ~4 mm clear area between U5 −IN and R46 for an optional PTFE standoff. The SUM_HI guard is a GND pour with stitching vias and a mask-free band (a closed ring can't fit inside the combo footprint).
-- **HAT:** below J13 at the back-right, rotated 90°, on 11 mm M2.5 standoffs (H10–H13). Keep parts under it short. The ADC dividers sit in one row per channel left of J17, level with the ADCnP pins. HAT connectors: J1 Pi 40-pin socket (bottom); J2 1×12 analog row along the bottom edge (IN0P, IN0N … IN3P, IN3N, GND, DAC_OUT, DAC_REF, GND): a socket on the bottom for the AFE, or 2.54 mm screw terminals on top for general use; J3 2×6 MCU/cable header on the right-hand short edge (1 +5V, 2 GND, 3 +3V3, 4 GND, 5 SCLK, 6 MOSI, 7 MISO, 8 CS_ADC, 9 CS_DAC, 10 DRDY, 11 SYNC, 12 CLK_IN; the host supplies 5 V and 3.3 V). Y1 takes a DIP-8 half-size can (hand-solder) or a 3.2 × 2.5 mm SMD part on pads inside it (`afe:Oscillator_DIP-8_ASE-3.2x2.5_Combo`). The HAT is routed (`scripts/hat/route.py`): SMD on top with GND fan-out vias to the bottom plane, a no-track strip above the Pi header's edge row so its GND pins keep their pour, everything else autorouted; AIN0N hops to the bottom layer once.
+- **HAT:** below J13 at the back-right, rotated 90°, on 11 mm M2.5 standoffs (H10–H13). Keep parts under it short. The ADC dividers sit in one row per channel left of J17, level with the ADCnP pins. HAT connectors: J1 Pi 40-pin socket (bottom); J2 1×12 analog row along the bottom edge (IN0P, IN0N … IN3P, IN3N, DAC_OUTB, DAC_OUT, DAC_REF, GND): a socket on the bottom for the AFE, or 2.54 mm screw terminals on top for general use; J3 2×6 MCU/cable header on the right-hand short edge (1 +5V, 2 GND, 3 +3V3, 4 GND, 5 SCLK, 6 MOSI, 7 MISO, 8 CS_ADC, 9 CS_DAC, 10 DRDY, 11 SYNC, 12 CLK_IN; the host supplies 5 V and 3.3 V). Y1 takes a DIP-8 half-size can (hand-solder) or a 3.2 × 2.5 mm SMD part on pads inside it (`afe:Oscillator_DIP-8_ASE-3.2x2.5_Combo`). The HAT is routed (`scripts/hat/route.py`): SMD on top with GND fan-out vias to the bottom plane, a no-track strip above the Pi header's edge row so its GND pins keep their pour, U2 (DAC80502, WSON-10) has locked escapes on its left-hand pins and ADC_CLK is a locked 0.3 mm run from JP1 to U1 (Clock net class); everything else autorouted.
 - **Mounting holes:** H1 (by J1, the star point) is the only chassis bond. H2–H9 are isolated M3 NPTH holes: front edge ×5 (H2, H7, H3, H4, H5), back edge ×1, centre ×2.
 - Combo footprints: same-numbered DIP and SOIC pads are joined with copper on every op-amp (followers also get the pin 2–6 link inside the package). The SOIC pads for pins 1, 5 and 8 are unnumbered (mechanical only): those pins are NC on every op-amp used here, so a part that uses them (offset trim, duals) would need the footprint changed.
 - Autorouting: GND is left to the pours (its pins are taken out of the router's netlist); everything else, including PICO_GND, is routed, with bottom-layer track cost ×3 to keep the bottom plane whole. The null-pot wipers (J14/J15 → U13/U14 +IN) and the op-amp decoupling links are pre-routed.
@@ -139,7 +139,7 @@ The NE5534 can't be used: it needs compensation pins, which this footprint doesn
 - Not simulated. Compensation values are hand calculations.
 
 ## Open items / things to verify before layout
-1. **DAC80501 SPI2C level** for SPI mode (HAT: R2 pulls low, JP2 ties to +5VA). The level shift assumes the 0–5 V output range (VDD = 5 V). The top few codes may clip, so firmware should limit them. K21 stays open until the DAC is configured.
+1. **DAC output range.** SPI2C is settled: low = SPI (DAC80502 datasheet SBAS793A), the R2 default. The level shift assumes the 0–5 V output range (VDD = 5 V). The top few codes may clip, so firmware should limit them. K21 stays open until the DAC is configured.
 2. **Reed relay pinout** (Standex/Meder SIL, 1A and 1B): contact on 1–7, coil on 3–5.
 3. **2N3904 C-B leakage** isn't a datasheet guarantee. Measure it, or fit an SMD BAV199 on an adapter.
 4. **Controller supply with an ESP32-S3-ETH:** it draws roughly 150–350 mA from +5 V (W5500 plus Wi-Fi peaks), which adds 1.5–3.5 W to the L7805 (from +15 V). Check the heatsink, or feed the module from its own USB-C/PoE. The ESP32 header map is from Waveshare's dimension drawing (underside silk); confirm on a real module.
