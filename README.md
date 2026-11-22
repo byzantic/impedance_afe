@@ -157,3 +157,5 @@ cd scripts/layout && /usr/bin/python3 place.py ../../afe.net && /usr/bin/python3
 FREEROUTING=/path/freerouting-2.5.0.jar /usr/bin/python3 autoroute.py 150 3.0   # run again (e.g. 80 2.0) to finish leftovers
 ```
 `place.py` and `preroute.py` rebuild the board from scratch, so they overwrite any placement or routing done by hand in KiCad. `preroute.py` must run on a freshly placed board. Freerouting doesn't always complete every connection; check with `check.py` and fix the last few by hand.
+
+The layout and JLC scripts here have been generalised for other projects in [kicad-claude-kit](https://github.com/byzantic/kicad-claude-kit) (private), which is also the Claude Code `kicad-board` skill. This repo keeps its own scripts; the kit doesn't replace them.
