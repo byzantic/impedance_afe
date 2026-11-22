@@ -5,7 +5,9 @@
 BOM: JLC columns (Comment, Designator, Footprint, LCSC Part #), grouped by part, LCSC codes from scripts/hat/design.py.
 No-fit parts (J1/J2 hand-soldered sockets on the bottom, Y1 DNP) are listed with Comment "DNP: ..." and no LCSC code:
 choose "do not place" for them in the JLC BOM step.  Solder jumpers and mounting holes aren't parts and are left out.
-CPL: Designator, Mid X, Mid Y, Layer, Rotation from KiCad's placement export (all parts, including the no-fit ones).
+CPL: Designator, Mid X, Mid Y, Layer, Rotation from KiCad's placement export (all parts, including the no-fit ones),
+plus ROT_FIX: JLC's part models are not drawn in KiCad's zero orientation.  Corrections read from JLC's placement
+preview (its pin-1 dot against the footprint's pin 1); they match the usual KiCad->JLC table (SOT-23 180, TSSOP/MSOP 270).
 """
 import collections, csv, importlib.util, os, re, subprocess, sys, tempfile, zipfile
 
@@ -19,6 +21,7 @@ os.makedirs(out, exist_ok=True)
 spec = importlib.util.spec_from_file_location('hd', os.path.join(HATDIR, 'design.py'))
 hd = importlib.util.module_from_spec(spec); spec.loader.exec_module(hd)
 parts = [p for p in hd.parts if not p['ref'].startswith(('H', 'JP'))]
+ROT_FIX = {'U1': -90, 'U2': -90, 'U3': 180}      # TSSOP-20, VSSOP-10, SOT-23-5
 nofit = {p['ref'] for p in parts if p['dnp'] or p['ref'].startswith('J')}
 
 
@@ -66,7 +69,7 @@ with open(pos) as fi, open(os.path.join(out, 'HAT_CPL_JLC.csv'), 'w', newline=''
     w.writerow(['Designator', 'Mid X', 'Mid Y', 'Layer', 'Rotation'])
     for r in csv.DictReader(fi):
         if r['Ref'] in refs:
-            w.writerow([r['Ref'], r['PosX'] + 'mm', r['PosY'] + 'mm', r['Side'].capitalize(), f"{float(r['Rot']):g}"])
+            w.writerow([r['Ref'], r['PosX'] + 'mm', r['PosY'] + 'mm', r['Side'].capitalize(), f"{(float(r['Rot']) + ROT_FIX.get(r['Ref'], 0)) % 360:g}"])
             n += 1
 assert n == len(refs), (n, len(refs))
 print(f'{out}: HAT_gerbers.zip, HAT_BOM_JLC.csv ({len(groups)} lines, no-fit {sorted(nofit, key=key)}), '
